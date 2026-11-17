@@ -26,7 +26,7 @@
       if (ev.data && ev.data.type === "frp-demo-ready") {
         ready = true;
         if (pendingStage) {
-          sendStage(pendingStage);
+          sendStage(pendingStage, true);
           pendingStage = null;
         }
       }
@@ -34,14 +34,19 @@
     return host;
   }
 
-  function sendStage(stage) {
+  function sendStage(stage, force) {
     if (!STAGES.has(stage) || !iframe) return;
+    if (!force && stage === lastStage) return;
     lastStage = stage;
     if (!ready) {
       pendingStage = stage;
       return;
     }
-    iframe.contentWindow.postMessage({ type: "frp-demo-stage", stage }, "*");
+    // Restart clears latch, then hold the new stage button down.
+    iframe.contentWindow.postMessage(
+      { type: "frp-demo-restart", stage },
+      "*"
+    );
   }
 
   function hide() {
@@ -76,7 +81,7 @@
     }
     const stage = slot.getAttribute("data-frp-stage") || "prior";
     placeOver(slot);
-    if (stage !== lastStage) sendStage(stage);
+    sendStage(stage, false);
   }
 
   function boot() {

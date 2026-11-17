@@ -16,7 +16,7 @@ title-slide-attributes:
   data-edge: "off"
 ---
 
-## Background {data-edge="all"}
+## Background {data-edge="off"}
 
 :::: {.columns}
 ::: {.column width="42%"}
@@ -259,6 +259,54 @@ model-as-code → inference
 
 **Stan** is the canonical example: write a generative model; get HMC for free.
 
+## Warm-up: static particle detection {data-edge="stats-fp"}
+
+A particle at unknown position $x$; one noisy observation $y$.
+
+:::: {.columns}
+::: {.column width="55%"}
+```haskell
+-- monad-bayes style
+detect :: MonadInfer m => Double -> m Double
+detect y = do
+  x <- normal 0 1              -- prior
+  score (normalPdf x 0.5 y)    -- likelihood
+  return x                     -- posterior sample
+```
+:::
+::: {.column width="45%"}
+$$
+\begin{aligned}
+x &\sim \mathrm{N}(0,1) \\
+y \mid x &\sim \mathrm{N}(x, 0.5^2)
+\end{aligned}
+$$
+
+[Model = generative story + conditioning.]{.muted}
+:::
+::::
+
+## Many inference methods {data-edge="stats-fp"}
+
+Same model; many ways to draw from $p(x\mid y)$:
+
+:::: {.columns}
+::: {.column width="50%"}
+- Exact conjugate update
+- Importance sampling / SMC
+- Metropolis–Hastings
+- **HMC** (Stan’s default)
+- Variational inference
+:::
+::: {.column width="50%"}
+The PPL’s job: **choose / derive** an inference method from the model code.
+
+[Stan ≈ HMC for static models.]{.muted}
+
+[What about models that unfold in **time**?]{.muted}
+:::
+::::
+
 ## A PPL for stochastic processes {data-edge="stats-fp"}
 
 Stan targets **static** models (batch data, fixed dimension).
@@ -285,12 +333,12 @@ Teal = latent position (prior only)
 ```haskell
 prior :: () >--> Position
 prior = proc _ -> do
-  x <- brownianMotion1D -< ()
-  y <- brownianMotion1D -< ()
+  x <- stochasticOscillator 0 0 -< 1
+  y <- stochasticOscillator 0 0 -< 1
   returnA -< V2 x y
 ```
 
-[A time-varying distribution — a stochastic process.]{.muted}
+[A noisy harmonic oscillator — a stochastic process.]{.muted}
 :::
 ::::
 
@@ -378,133 +426,139 @@ inference =
 :::
 :::
 
-## Little contact so far {data-edge="fp-physics"}
+## An unknown unknown {data-edge="fp-physics"}
 
-Functional programming and programming-language theory have made **little contact** with computational physics.
+Programming language theory — $\lambda$-calculus, dependent types, the Curry–Howard isomorphism — is largely an **unknown unknown** for physicists.
+
+Historically understandable:
+
+- Computational problems were bottlenecked by **speed**
+- Low-level control of hardware was the scarce resource
+- So the culture optimized for Fortran / C / CUDA, not for expressive specification
+
+## A new bottleneck: code complexity {data-edge="fp-physics"}
+
+Performance still matters — but **complexity** is increasingly the limiter.
+
+What we want is **compositionality**: glue correct pieces into larger correct pieces.
+
+**Example:** tensor-network algorithms.
+
+- Often written for a fixed lattice / geometry
+- Generalizing over **graph topology** (trees, grids, arbitrary graphs) means the same contraction / update idea must be stated abstractly
+- Without that abstraction, every geometry is a rewrite
+
+## Separate specification from implementation {data-edge="fp-physics"}
+
+**Applied stats before probabilistic programming languages (PPLs):**
 
 :::: {.columns}
-::: {.column width="50%"}
-**Understandable**
+::: {.column width="46%"}
+![](media/icons/blackboard.jpg){height=140px}
 
-- Performance is the priority
-- You want hardware control
-- Imperative / low-level tools dominate
+[maths]{.muted}
 :::
-::: {.column width="50%"}
-**But appealing**
+::: {.column width="8%"}
+::: {.center-block}
+→
+:::
+:::
+::: {.column width="46%"}
+![](media/icons/code.png){height=140px}
 
-- Specs of algorithms can be very rich
-- Lots of structure to encode
-- Types / abstraction can pull their weight
+[code — `model + inference` fused]{.muted}
 :::
 ::::
 
-## A mathematically rich domain {data-edge="fp-physics"}
+Derive on a whiteboard, then distill into code that **combines** the model and the inference method.
 
-**Example:** group representations (e.g. $SU(2)$ spins in quantum many-body physics).
+**PPLs:** tease the two apart — specify the model; automate / choose the inference (Stan, …).
 
-Symmetry-respecting maps (intertwiners) carry nontrivial structure:
+**Physics:** the same two parts are still disjoint — mathematical description (e.g. linear maps) vs. implementation (arrays)
 
-- Tensor products fuse: $\tfrac12\otimes\tfrac12 \;\cong\; 1\oplus 0$
-- Data lives in **blocks** indexed by irreps
-- Shapes are dictated by representation theory — not by ad hoc bookkeeping
+## Type-driven development {data-edge="fp-physics"}
 
-[Natural question: can the type system track this structure?]{.muted}
+> There was a theorem I formalized, and there was a certain constant 12 that came out… and this 12 had to be carried all through the proof… a few weeks later someone said we can improve this 12 to 11… when this happens with pen and paper… there can be subtle things that you didn't realize about 12 that you didn't realize you were taking advantage of.
+>
+> [But once formalized], you change the 12 to 11, you run the compiler, and of the thousands of lines you have, 90% of them still work and there's a couple underlined in red… It immediately isolates which steps you need changed… If you program things correctly, most of your lines will not be red.
+>
+> — Terence Tao (on Lean formalization)
 
-## Length-checked linear algebra {data-edge="fp-physics"}
+## Same idea in physics {data-edge="fp-physics"}
 
-Start simple: dimensions in the types.
+Change the type a Krylov solver is allowed to act on — the checker shows what else must break.
 
-```haskell
-vectorExample :: C 3
-vectorExample = vec (1,2,3)
+- Refactors become local and guided
+- Not “find every array of the wrong shape by hand”
+- Types as a live interface between maths and code
 
-tensorProductExample :: C 3 ⊗ C 2
-tensorProductExample =
-  vec (1,2,3) ⊗ vec (4,5)
+## Linear algebra, two views {data-edge="fp-physics"}
+
+:::: {.columns}
+::: {.column width="50%"}
+**Computational**
+
+- A tensor *is* an array
+- Layout, strides, dtype
+- Realization fixed up front
+:::
+::: {.column width="50%"}
+**Mathematical**
+
+- A tensor is a multilinear map - Many realizations: dense, sparse, blocked, symmetry-reduced, …
+- Choose the representation later
+:::
+::::
+
+Specifying the math first makes it natural to **swap realizations** without rewriting the algorithm.
+
+## Case study: $SU(2)$ representations {data-edge="fp-physics"}
+
+A representation is a vector space with a group action.
+Irreps are the indecomposable pieces; a general rep is their sum.
+
+```lean
+-- Lean / mathlib sketch
+structure Representation (G V) where
+  ρ : G → (V →ₗ[ℂ] V)
+  map_one : ρ 1 = id
+  map_mul : ρ (g * h) = ρ g ∘ₗ ρ h
+
+-- V ≅ ⊕ⱼ  (irrep ⱼ) ⊗ (multiplicity)
+-- the group acts on each irrep
 ```
 
-Wrong length ⇒ **compile-time** error — not a silent reshape bug at runtime.
+## Symmetric tensors = intertwiners {data-edge="fp-physics"}
 
-## Irreps as types {data-edge="fp-physics"}
+A symmetry-respecting map $A\to B$ is a linear map that **commutes with the action**:
 
-Same idea, but the “length” is a representation:
-
-```haskell
-irrepExample ::
-  VectorOf SU2 (Irrep (Spin (1/2)))
-irrepExample = vec (1,2)
-
-directSumOfIrrepsExample ::
-  Unfused SU2
-    (Irrep (Spin (1/2))
-       :⊕: Irrep (Spin (3/2)))
-directSumOfIrrepsExample =
-  (vec (1,2), vec (3,4,5,6))
+```lean
+def Intertwiner (ρA ρB) :=
+  { f : A →ₗ[ℂ] B //
+      ∀ g, f ∘ₗ ρA g = ρB g ∘ₗ f }
 ```
 
-[$\mathbb{C}^2$ for spin-$\tfrac12$; $\mathbb{C}^4$ for spin-$\tfrac32$ — checked by the type.]{.muted}
-
-## Fusion at the type level {data-edge="fp-physics"}
-
-Tensor products of irreps **fuse**: $\tfrac12\otimes\tfrac12 \;\cong\; 0\oplus 1$.
-
-```haskell
-unfused :: Unfused SU2
-  (Irrep (Spin (1/2)) :⊗: Irrep (Spin (1/2)))
-unfused = mat ((1,2),(5,6))   -- ℂ² ⊗ ℂ²
-
-fused :: Fused SU2
-  (Irrep (Spin (1/2)) :⊗: Irrep (Spin (1/2)))
-fused = (konst 1, vec (4,5,6))  -- ℂ¹ ⊕ ℂ³
-```
-
-Haskell computes the fused shape **at compile time**; a wrong block size is rejected before you run anything.
-
-## Keeping only the trivial sector {data-edge="fp-physics"}
-
-Intertwiners live in the invariant ($j{=}0$) subspace — Schur's lemma as a type:
-
-```haskell
-trivialSectorExample ::
-  Sym SU2
-    (Irrep (Spin (1/2)) :⊗: Irrep (Spin (1/2)))
-trivialSectorExample = konst 2   -- ℂ¹
-
--- 3/2 ⊗ 1/2 = 1 ⊕ 2  (no singlet)
-trivialSectorExample2 ::
-  Sym SU2
-    (Irrep (Spin (3/2)) :⊗: Irrep (Spin (1/2)))
-trivialSectorExample2 = EmptyFTrees
-```
-
-## From fusion to categories {data-edge="fp-physics"}
-
-Once objects are typed, morphisms compose by the **same** abstract law in every fusion category.
-
-```haskell
--- Mac Lane ladder on names ⌜f⌝, ⌜g⌝:
-composeNames @Fib  nf ng
-composeNames @Ising nf ng
-```
+Hom-space dictionary:
 
 $$
-\lceil f\rceil\otimes\lceil g\rceil
-\;\xrightarrow{\;\alpha,\;\varepsilon,\;\lambda\;}\;
-\lceil g\circ f\rceil
+\mathrm{Hom}(A,B)
+\;\cong\;
+A^{*}\otimes B
+\;\cong\;
+\bigoplus_{j} m_{j}\,(\text{irrep }j)
 $$
 
-Fibonacci and Ising share one implementation — the mathematics supplies the abstraction boundary.
+The maps that commute with $G$ are exactly the **trivial sector** ($j{=}0$).
 
-## Design principle {data-edge="fp-physics"}
+## What the maths buys you {data-edge="fp-physics"}
 
-The mathematics shows how to **abstract** and **design** the software:
+Once $\mathrm{Hom}_G(A,B)$ is the trivial sector of $A^{*}\otimes B$:
 
-- Representation theory ⇒ block shapes in the types
-- Fusion rules ⇒ checked at compile time
-- Compact closed structure ⇒ one compositional API across theories (SU(2), Fib, Ising, …)
+- Storage collapses to a handful of blocks (Schur)
+- Shapes are dictated by fusion rules, not bookkeeping
+- The same abstract API can target dense arrays *or* symmetry-reduced tensors
 
-[Code that looks like the maths — not an imperative simulation with the same numeric answers.]{.muted}
+[Next: track those blocks in the type system (`typed-fusion` / Lean).]{.muted}
 
 ## Outlook {data-edge="all"}
 

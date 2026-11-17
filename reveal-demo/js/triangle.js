@@ -42,7 +42,7 @@
   <circle class="vtx-dot strand-f" cx="${F.x}" cy="${F.y}" r="7" />
   <circle class="vtx-dot strand-p" cx="${P.x}" cy="${P.y}" r="7" />
   <g class="vtx-label strand-s" transform="translate(${S.x}, ${S.y - 28})">
-    <text text-anchor="middle">Statistics</text>
+    <text text-anchor="middle">Stats/ML</text>
   </g>
   <g class="vtx-label strand-f" transform="translate(${F.x}, ${F.y + 32})">
     <text text-anchor="middle">Functional</text>

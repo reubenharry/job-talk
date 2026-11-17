@@ -47,6 +47,58 @@
   write a generative model; get HMC for free.
 \end{frame}
 
+\begin{frame}[fragile]{Warm-up: static particle detection}
+  A particle at unknown position $x$; one noisy observation $y$.
+  \vspace{0.4em}
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+\begin{semiverbatim}
+-- monad-bayes style
+detect :: MonadInfer m => Double -> m Double
+detect y = do
+  x <- normal 0 1           -- prior
+  score (normalPdf x 0.5 y) -- likelihood
+  return x                  -- posterior sample
+\end{semiverbatim}
+    \end{column}
+    \begin{column}{0.45\textwidth}
+      \[
+        \begin{aligned}
+          x &\sim \mathcal{N}(0,1) \\
+          y \mid x &\sim \mathcal{N}(x, 0.5^2)
+        \end{aligned}
+      \]
+      \vspace{0.3em}
+      {\small Model = generative story + conditioning.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Many inference methods}
+  Same model; many ways to draw from $p(x\mid y)$:
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}\setlength\itemsep{0.25em}
+        \item Exact conjugate update
+        \item Importance sampling / SMC
+        \item Metropolis--Hastings
+        \item \textbf{HMC} (Stan's default)
+        \item Variational inference
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      The PPL's job: \textbf{choose / derive} an
+      inference method from the model code.
+
+      \vspace{0.6em}
+      {\small Stan $\approx$ HMC for static models.}
+
+      \vspace{0.4em}
+      {\small What about models that unfold in \textbf{time}?}
+    \end{column}
+  \end{columns}
+\end{frame}
+
 \begin{frame}{A PPL for stochastic processes}
   Stan targets \textbf{static} models (batch data, fixed dimension).
 
@@ -81,12 +133,12 @@
 \begin{semiverbatim}
 prior :: () >--> Position
 prior = proc _ -> do
-  x <- brownianMotion1D -< ()
-  y <- brownianMotion1D -< ()
+  x <- stochasticOscillator 0 0 -< 1
+  y <- stochasticOscillator 0 0 -< 1
   returnA -< V2 x y
 \end{semiverbatim}
       \vspace{0.4em}
-      {\small A time-varying distribution --- a stochastic process.}
+      {\small A noisy harmonic oscillator --- a stochastic process.}
     \end{column}
   \end{columns}
 \end{frame}

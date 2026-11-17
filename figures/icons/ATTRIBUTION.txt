@@ -1,0 +1,8 @@
+blackboard.jpg
+  Source: Wikimedia Commons — "Tableau noir avec maths à Thiès - 01.jpg"
+  Author: GastelEtzwane
+  License: CC BY-SA 4.0
+  https://commons.wikimedia.org/wiki/File:Tableau_noir_avec_maths_%C3%A0_Thi%C3%A8s_-_01.jpg
+
+code.png
+  Rendered C matmul / buffer-packing snippet via Pygments (illustrative).

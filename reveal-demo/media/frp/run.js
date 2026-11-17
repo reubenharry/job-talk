@@ -70,33 +70,35 @@ try {
     particles: "stage-particles",
   };
 
-  // Hold the button across ≥1 RAF so the Rhine rising-edge sees it.
-  function pulseButton(name) {
-    const el = document.querySelector(`[data-btn="${name}"]`);
-    if (!el) return Promise.resolve();
-    el.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
-    return new Promise((resolve) => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          el.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
-          resolve();
-        });
-      });
-    });
+  /** Currently held stage button — kept down so Haskell sees a level, not an edge. */
+  let heldStageEl = null;
+
+  function releaseStage() {
+    if (!heldStageEl) return;
+    heldStageEl.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+    heldStageEl = null;
   }
 
   function setStage(stage) {
-    const btn = STAGE_BTN[stage];
-    if (!btn) return Promise.resolve();
-    return pulseButton(btn);
+    const name = STAGE_BTN[stage];
+    if (!name) return;
+    const el = document.querySelector(`[data-btn="${name}"]`);
+    if (!el) return;
+    if (heldStageEl === el) return;
+    releaseStage();
+    el.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    heldStageEl = el;
   }
 
   window.setFrpDemoStage = setStage;
   window.addEventListener("message", (ev) => {
     const data = ev.data;
     if (!data || typeof data !== "object") return;
-    if (data.type === "frp-demo-stage") setStage(data.stage);
+    if (data.type === "frp-demo-stage") {
+      setStage(data.stage);
+    }
     if (data.type === "frp-demo-restart") {
+      releaseStage();
       instance.exports.hs_restartDemo();
       setStatus("Restarted.");
       if (data.stage) setStage(data.stage);
@@ -104,22 +106,20 @@ try {
   });
 
   const params = new URLSearchParams(location.search);
-  const boot = (async () => {
-    if (params.has("stage")) await setStage(params.get("stage"));
-    if (window.parent !== window) {
-      window.parent.postMessage({ type: "frp-demo-ready" }, "*");
-    }
-  })();
+  if (params.has("stage")) setStage(params.get("stage"));
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: "frp-demo-ready" }, "*");
+  }
 
   // Soft restart: reset automaton + clocks in Haskell (no WASM reload).
   for (const el of document.querySelectorAll("[data-restart]")) {
-    el.addEventListener("click", async () => {
+    el.addEventListener("click", () => {
+      releaseStage();
       instance.exports.hs_restartDemo();
       setStatus("Restarted.");
-      if (params.has("stage")) await setStage(params.get("stage"));
+      if (params.has("stage")) setStage(params.get("stage"));
     });
   }
-  await boot;
 } catch (err) {
   console.error(err);
   setStatus(`Error: ${err.message}`);

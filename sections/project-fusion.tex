@@ -7,149 +7,180 @@
   \end{center}
 \end{frame}
 
-\begin{frame}{Little contact so far}
-  Functional programming and programming-language theory
-  have made \textbf{little contact} with computational physics.
+\begin{frame}{An unknown unknown}
+  Programming language theory --- $\lambda$-calculus, dependent types,
+  the Curry--Howard isomorphism --- is largely an
+  \textbf{unknown unknown} for physicists.
 
   \vspace{0.8em}
+  Historically understandable:
+  \begin{itemize}\setlength\itemsep{0.4em}
+    \item Computational problems were bottlenecked by \textbf{speed}
+    \item Low-level control of hardware was the scarce resource
+    \item So the culture optimized for Fortran / C / CUDA, not for
+      expressive specification
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{A new bottleneck: code complexity}
+  Performance still matters --- but \textbf{complexity} is increasingly
+  the limiter.
+  \vspace{0.6em}
+  What we want is \textbf{compositionality}: glue correct pieces into
+  larger correct pieces.
+  \vspace{0.7em}
+  \textbf{Example:} tensor-network algorithms.
+  \begin{itemize}\setlength\itemsep{0.35em}
+    \item Often written for a fixed lattice / geometry
+    \item Generalizing over \textbf{graph topology} (trees, grids,
+      arbitrary graphs) means the same contraction / update idea
+      must be stated abstractly
+    \item Without that abstraction, every geometry is a rewrite
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Separate specification from implementation}
+  \textbf{Before PPLs (statistics):}
+  \vspace{0.25em}
+  \begin{center}
+    \begin{tikzpicture}[font=\small]
+      \node[inner sep=0pt] (bb)
+        {\includegraphics[height=1.85cm]{figures/icons/blackboard.jpg}};
+      \node[above=0.06cm of bb, font=\scriptsize\bfseries] {maths};
+      \node[right=0.45cm of bb] (arr1) {\Large$\longrightarrow$};
+      \node[inner sep=0pt, right=0.45cm of arr1] (code)
+        {\includegraphics[height=1.85cm]{figures/icons/code.png}};
+      \node[above=0.06cm of code, font=\scriptsize\bfseries] {code};
+      \node[below=0.08cm of code, font=\scriptsize, align=center]
+        {\texttt{model + inference}\\[-0.1em]fused in one program};
+    \end{tikzpicture}
+  \end{center}
+  \vspace{0.35em}
+  Derive on a whiteboard, then distill into code that
+  \textbf{combines} the model and the inference method.
+
+  \vspace{0.55em}
+  \textbf{PPLs:} tease the two apart --- specify the model;
+  automate / choose the inference (Stan, \ldots).
+
+  \vspace{0.55em}
+  \textbf{Physics:} the same two parts are still disjoint ---
+  mathematical description vs.\ performant implementation ---
+  and we want the analogous split (and link).
+\end{frame}
+
+\begin{frame}{Type-driven development}
+  \begin{quote}
+    \small
+    ``There was a theorem I formalized, and there was a certain
+    constant 12 that came out\ldots and this 12 had to be carried
+    all through the proof\ldots a few weeks later someone said we
+    can improve this 12 to 11\ldots when this happens with pen and
+    paper\ldots there can be subtle things that you didn't realize
+    about 12 that you didn't realize you were taking advantage of.
+
+    \vspace{0.4em}
+    [But once formalized], you change the 12 to 11, you run the
+    compiler, and of the thousands of lines you have, 90\% of them
+    still work and there's a couple underlined in red\ldots It
+    immediately isolates which steps you need changed\ldots If you
+    program things correctly, most of your lines will not be red.''
+  \end{quote}
+  \vspace{-0.2em}
+  \hfill{\scriptsize --- Terence Tao (on Lean formalization)}
+\end{frame}
+
+\begin{frame}{Same idea in physics}
+  Change the type a Krylov solver is allowed to act on ---\\
+  the checker shows what else must break.
+
+  \vspace{0.9em}
+  \begin{itemize}\setlength\itemsep{0.4em}
+    \item Refactors become local and guided
+    \item Not ``find every array of the wrong shape by hand''
+    \item Types as a live interface between maths and code
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Linear algebra, two views}
   \begin{columns}[T]
     \begin{column}{0.48\textwidth}
-      \textbf{Understandable}
+      \textbf{Computational}
       \begin{itemize}\setlength\itemsep{0.35em}
-        \item Performance is the priority
-        \item You want hardware control
-        \item Imperative / low-level tools dominate
+        \item A tensor \emph{is} an array
+        \item Layout, strides, dtype
+        \item Realization fixed up front
       \end{itemize}
     \end{column}
     \begin{column}{0.48\textwidth}
-      \textbf{But appealing}
+      \textbf{Mathematical}
       \begin{itemize}\setlength\itemsep{0.35em}
-        \item Specs of algorithms can be very rich
-        \item Lots of structure to encode
-        \item Types / abstraction can pull their weight
+        \item A tensor is an abstract
+          multilinear object
+        \item Many realizations:
+          dense, sparse, blocked,
+          symmetry-reduced, \ldots
+        \item Choose the representation
+          later
       \end{itemize}
     \end{column}
   \end{columns}
+  \vspace{1em}
+  Specifying the math first makes it natural to
+  \textbf{swap realizations} without rewriting the algorithm.
 \end{frame}
 
-\begin{frame}{A mathematically rich domain}
-  \textbf{Example:} group representations
-  (e.g.\ $SU(2)$ spins in quantum many-body physics).
-
-  \vspace{0.7em}
-  Symmetry-respecting maps (intertwiners) carry nontrivial structure:
-  \begin{itemize}\setlength\itemsep{0.35em}
-    \item Tensor products fuse: $\tfrac12\otimes\tfrac12 \;\cong\; 1\oplus 0$
-    \item Data lives in \textbf{blocks} indexed by irreps
-    \item Shapes are dictated by representation theory --- not by ad hoc bookkeeping
-  \end{itemize}
-
-  \vspace{0.6em}
-  {\small Natural question: can the type system track this structure?}
-\end{frame}
-
-\begin{frame}[fragile]{Length-checked linear algebra}
-  Start simple: dimensions in the types.
-  \vspace{0.5em}
-\begin{semiverbatim}
-vectorExample :: C 3
-vectorExample = vec (1,2,3)
-
-tensorProductExample :: C 3 ⊗ C 2
-tensorProductExample =
-  vec (1,2,3) ⊗ vec (4,5)
-\end{semiverbatim}
-  \vspace{0.5em}
-  Wrong length $\Rightarrow$ \textbf{compile-time} error --- not a silent
-  reshape bug at runtime.
-\end{frame}
-
-\begin{frame}[fragile]{Irreps as types}
-  Same idea, but the ``length'' is a representation:
-  \vspace{0.5em}
-\begin{semiverbatim}
-irrepExample ::
-  VectorOf SU2 (Irrep (Spin (1/2)))
-irrepExample = vec (1,2)
-
-directSumOfIrrepsExample ::
-  Unfused SU2
-    (Irrep (Spin (1/2))
-       :⊕: Irrep (Spin (3/2)))
-directSumOfIrrepsExample =
-  (vec (1,2), vec (3,4,5,6))
-\end{semiverbatim}
-  \vspace{0.4em}
-  {\small $\mathbb{C}^2$ for spin-$\tfrac12$; $\mathbb{C}^4$ for spin-$\tfrac32$ --- checked by the type.}
-\end{frame}
-
-\begin{frame}[fragile]{Fusion at the type level}
-  Tensor products of irreps \textbf{fuse}:
-  $\tfrac12\otimes\tfrac12 \;\cong\; 0\oplus 1$.
+\begin{frame}[fragile]{Case study: $SU(2)$ representations}
+  A representation is a vector space with a group action.\\
+  Irreps are the indecomposable pieces; a general rep is their sum.
   \vspace{0.45em}
 \begin{semiverbatim}
-unfused :: Unfused SU2
-  (Irrep (Spin (1/2)) :⊗: Irrep (Spin (1/2)))
-unfused = mat ((1,2),(5,6))   -- ℂ² ⊗ ℂ²
+-- Lean / mathlib sketch
+structure Representation (G V) where
+  ρ : G → (V →ₗ[ℂ] V)
+  map_one : ρ 1 = id
+  map_mul : ρ (g * h) = ρ g ∘ₗ ρ h
 
-fused :: Fused SU2
-  (Irrep (Spin (1/2)) :⊗: Irrep (Spin (1/2)))
-fused = (konst 1, vec (4,5,6))  -- ℂ¹ ⊕ ℂ³
-\end{semiverbatim}
-  \vspace{0.45em}
-  Haskell computes the fused shape \textbf{at compile time};\\
-  a wrong block size is rejected before you run anything.
-\end{frame}
-
-\begin{frame}[fragile]{Keeping only the trivial sector}
-  Intertwiners live in the invariant ($j{=}0$) subspace ---
-  Schur's lemma as a type:
-  \vspace{0.45em}
-\begin{semiverbatim}
-trivialSectorExample ::
-  Sym SU2
-    (Irrep (Spin (1/2)) :⊗: Irrep (Spin (1/2)))
-trivialSectorExample = konst 2   -- ℂ¹
-
--- 3/2 ⊗ 1/2 = 1 ⊕ 2  (no singlet)
-trivialSectorExample2 ::
-  Sym SU2
-    (Irrep (Spin (3/2)) :⊗: Irrep (Spin (1/2)))
-trivialSectorExample2 = EmptyFTrees
+-- V ≅ ⊕ⱼ  (irrep ⱼ)⊗(multiplicity)
+-- the group acts on each irrep
 \end{semiverbatim}
 \end{frame}
 
-\begin{frame}[fragile]{From fusion to categories}
-  Once objects are typed, morphisms compose by the
-  \textbf{same} abstract law in every fusion category.
+\begin{frame}[fragile]{Symmetric tensors $=$ intertwiners}
+  A symmetry-respecting map $A\to B$ is a linear map that
+  \textbf{commutes with the action}:
   \vspace{0.4em}
 \begin{semiverbatim}
--- Mac Lane ladder on names ⌜f⌝, ⌜g⌝:
-composeNames @Fib  nf ng
-composeNames @Ising nf ng
+def Intertwiner (ρA ρB) :=
+  \{ f : A →ₗ[ℂ] B //
+      ∀ g, f ∘ₗ ρA g = ρB g ∘ₗ f \}
 \end{semiverbatim}
-  \vspace{0.5em}
+  \vspace{0.55em}
+  Hom-space dictionary:
   \[
-    \lceil f\rceil\otimes\lceil g\rceil
-    \;\xrightarrow{\;\alpha,\;\varepsilon,\;\lambda\;}\;
-    \lceil g\circ f\rceil
+    \mathrm{Hom}(A,B)
+    \;\cong\;
+    A^{*}\otimes B
+    \;\cong\;
+    \bigoplus_{j} m_{j}\,
+    (\text{irrep }j)
   \]
-  \vspace{0.3em}
-  Fibonacci and Ising share one implementation ---\\
-  the mathematics supplies the abstraction boundary.
+  The maps that commute with $G$ are exactly the
+  \textbf{trivial sector} ($j{=}0$).
 \end{frame}
 
-\begin{frame}{Design principle}
-  The mathematics shows how to \textbf{abstract} and
-  \textbf{design} the software:
-  \begin{itemize}\setlength\itemsep{0.45em}
-    \item Representation theory $\;\Rightarrow\;$ block shapes in the types
-    \item Fusion rules $\;\Rightarrow\;$ checked at compile time
-    \item Compact closed structure $\;\Rightarrow\;$ one compositional API
-      across theories (SU(2), Fib, Ising, \ldots)
+\begin{frame}{What the maths buys you}
+  Once $\mathrm{Hom}_G(A,B)$ is the trivial sector of
+  $A^{*}\otimes B$:
+  \begin{itemize}\setlength\itemsep{0.4em}
+    \item Storage collapses to a handful of blocks
+      (Schur)
+    \item Shapes are dictated by fusion rules, not bookkeeping
+    \item The same abstract API can target dense arrays
+      \emph{or} symmetry-reduced tensors
   \end{itemize}
 
   \vspace{0.7em}
-  {\small Code that looks like the maths --- not an imperative simulation
-  with the same numeric answers.}
+  {\small Next: track those blocks in the type system
+  (\texttt{typed-fusion} / Lean).}
 \end{frame}
