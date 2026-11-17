@@ -1,0 +1,168 @@
+\section{Functional reactive programming}
+\renewcommand{\currentEdge}{stats-fp}
+
+\begin{frame}{Statistics + Functional Programming}
+  \begin{center}
+    \ResearchTriangle{stats-fp}
+  \end{center}
+\end{frame}
+
+\begin{frame}{The na\"ive workflow}
+  A natural way to do statistical programming:
+  \begin{enumerate}\setlength\itemsep{0.4em}
+    \item Derive the model on a whiteboard
+      (the Markov kernels you want: prior, likelihood, filter,\ldots)
+    \item Hand-write a program that implements those kernels
+  \end{enumerate}
+  \vspace{0.6em}
+  Laborious --- and risky:
+  \begin{itemize}\setlength\itemsep{0.3em}
+    \item No guarantee of a \textbf{link} between the mathematical model
+      and the running program
+    \item Every change to the model reopens the derivation
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Probabilistic programming}
+  \textbf{Idea:} specify the \emph{model} as code;\\
+  automate the derivation of the inference method.
+  \vspace{0.8em}
+  \begin{columns}[c]
+    \begin{column}{0.48\textwidth}
+      \centering
+      {\large whiteboard $\;\to\;$ program}\\[0.4em]
+      {\small hand-derived kernels}
+    \end{column}
+    \begin{column}{0.04\textwidth}
+      \centering$\Longrightarrow$
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \centering
+      {\large model-as-code $\;\to\;$ inference}\\[0.4em]
+      {\small compiler / library derives the sampler}
+    \end{column}
+  \end{columns}
+  \vspace{1em}
+  \textbf{Stan} is the canonical example:\\
+  write a generative model; get HMC for free.
+\end{frame}
+
+\begin{frame}{A PPL for stochastic processes}
+  Stan targets \textbf{static} models (batch data, fixed dimension).
+
+  \vspace{0.5em}
+  I've been building a probabilistic programming language for
+  \textbf{stochastic processes}: models that unfold in time,
+  with streaming observations and online inference.
+
+  \vspace{0.6em}
+  Built in Haskell by fusing
+  \begin{itemize}\setlength\itemsep{0.25em}
+    \item \textbf{functional reactive programming} --- signal functions over time
+    \item \textbf{probabilistic programming} --- sampling, conditioning, SMC
+  \end{itemize}
+\end{frame}
+
+% --- Live demo: ball with noisy observations ---------------------------------
+% Preferred: Quarto/Reveal deck embeds WASM demo1 and stages via
+% .frp-demo-slot[data-frp-stage=prior|obs|hidden|particles].
+% Beamer: run the browser demo alongside, or advance these frames as cues.
+
+\begin{frame}[fragile]{Demo: prior dynamics}
+  \begin{columns}[T]
+    \begin{column}{0.46\textwidth}
+      \textbf{Live:} latent ball only\\[0.3em]
+      {\small (teal = true position)}
+      \vspace{1.2em}
+
+      {\scriptsize\textit{[Reveal: live WASM embed]}}
+    \end{column}
+    \begin{column}{0.54\textwidth}
+\begin{semiverbatim}
+prior :: () >--> Position
+prior = proc _ -> do
+  x <- brownianMotion1D -< ()
+  y <- brownianMotion1D -< ()
+  returnA -< V2 x y
+\end{semiverbatim}
+      \vspace{0.4em}
+      {\small A time-varying distribution --- a stochastic process.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Demo: observation model}
+  \begin{columns}[T]
+    \begin{column}{0.46\textwidth}
+      \textbf{Live:} latent + noisy observations\\[0.3em]
+      {\small (red = what the system sees)}
+      \vspace{1.2em}
+
+      {\scriptsize\textit{[demo: + observations]}}
+    \end{column}
+    \begin{column}{0.54\textwidth}
+\begin{semiverbatim}
+observationModel ::
+  Position >--> Observation
+observationModel = proc p -> do
+  nx <- noise -< ()
+  ny <- noise -< ()
+  returnA -< p + V2 nx ny
+  where
+    noise = constM (normal 0 std)
+\end{semiverbatim}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Demo: the inference problem}
+  \begin{columns}[T]
+    \begin{column}{0.46\textwidth}
+      \textbf{Live:} hide / shade the latent\\[0.3em]
+      {\small Only observations remain visible.}
+      \vspace{1.2em}
+
+      {\scriptsize\textit{[demo: latent off]}}
+      \vspace{0.8em}
+
+      {\small Infer $p(\mathrm{position}_t \mid \mathrm{obs}_{\le t})$.}
+    \end{column}
+    \begin{column}{0.54\textwidth}
+\begin{semiverbatim}
+posterior ::
+  Observation >-/-> Position
+posterior = proc obs -> do
+  latent <- prior -< ()
+  observe -<
+    likelihood obs latent
+  returnA -< latent
+\end{semiverbatim}
+      \vspace{0.4em}
+      {\small Unnormalized: model + conditioning, not yet a sampler.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Demo: automated inference}
+  \begin{columns}[T]
+    \begin{column}{0.46\textwidth}
+      \textbf{Live:} particle cloud\\[0.3em]
+      {\small (purple = posterior particles)}
+      \vspace{1.2em}
+
+      {\scriptsize\textit{[demo: + particles]}}
+    \end{column}
+    \begin{column}{0.54\textwidth}
+\begin{semiverbatim}
+inference :: Observation
+          >--> [(Position, Weight)]
+inference =
+  particleFilter params \{n = 100\}
+    posterior
+\end{semiverbatim}
+      \vspace{0.6em}
+      {\small Same model code; SMC is derived by the library ---\\
+      analogous to Stan automating HMC.}
+    \end{column}
+  \end{columns}
+\end{frame}

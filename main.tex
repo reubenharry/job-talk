@@ -1,0 +1,44 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+
+\usetheme[progressbar=frametitle]{metropolis}
+\setbeamertemplate{navigation symbols}{}
+
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{multimedia}
+\usepackage{tikz}
+\usepackage{etoolbox}
+
+\usetikzlibrary{calc,positioning}
+
+\input{figures/triangle}
+
+% Corner motif: follows \currentEdge (set per section)
+\addtobeamertemplate{background canvas}{}{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=south east, inner sep=0pt, xshift=-0.35cm, yshift=0.3cm]
+      at (current page.south east)
+      {\ResearchTriangleCorner{\currentEdge}};
+  \end{tikzpicture}%
+}
+
+\title{Probability, Programming and Physics}
+\author{Reuben Cohn-Gordon}
+\institute{Postdoctoral Research Scientist, UC Berkeley}
+\date{}
+
+\begin{document}
+
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+\input{sections/intro}
+\input{sections/project-hmc}
+\input{sections/project-frp}
+\input{sections/project-fusion}
+\input{sections/close}
+
+\end{document}

@@ -1,0 +1,398 @@
+:root {
+  --bg: #f7f6f3;
+  --fg: #1c1b19;
+  --muted: #6a6760;
+  --edge-dim: #c8c2b6;
+  --edge-hi: #1c1b19;
+  --accent: #2c4a6e;
+  --dot: #1c1b19;
+  --strand-s: #1f6f6a;
+  --strand-f: #9a5b24;
+  --strand-p: #2f4d7a;
+  --edge-stats-fp: #5f6540;
+  --edge-stats-physics: #275f72;
+  --edge-fp-physics: #6a4f4a;
+}
+
+.reveal-viewport {
+  background: var(--bg);
+}
+
+.reveal {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  color: var(--fg);
+  font-size: 36px;
+}
+
+.reveal h1,
+.reveal h2,
+.reveal h3 {
+  font-family: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.reveal .subtitle,
+.reveal .quarto-title-author,
+.reveal .quarto-title-affiliation,
+.reveal .subtitle p {
+  color: var(--muted);
+  font-size: 0.7em;
+}
+
+.reveal .slides > section > h1 {
+  font-size: 1.8em;
+}
+
+.reveal ul,
+.reveal ol {
+  margin-left: 0.4em;
+}
+
+.reveal li {
+  margin: 0.45em 0;
+}
+
+.reveal .muted {
+  color: var(--muted);
+  font-size: 0.75em;
+}
+
+.reveal .edge-pair {
+  font-size: 0.78em;
+}
+
+.reveal .strand-s {
+  color: var(--strand-s);
+}
+
+.reveal .strand-f {
+  color: var(--strand-f);
+}
+
+.reveal .strand-p {
+  color: var(--strand-p);
+}
+
+.reveal .strand-mark {
+  font-family: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  font-size: 0.85em;
+  margin-right: 0.35em;
+}
+
+.reveal .center-block {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0.2rem;
+}
+
+.research-triangle {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Full-size triangle */
+.triangle {
+  width: min(460px, 78vw);
+  height: auto;
+  overflow: visible;
+}
+
+.triangle .edge {
+  stroke: var(--edge-dim);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.triangle .edge.is-active {
+  stroke-width: 5.5;
+}
+
+.triangle .edge[data-edge="stats-fp"].is-active {
+  stroke: var(--edge-stats-fp);
+}
+
+.triangle .edge[data-edge="stats-physics"].is-active {
+  stroke: var(--edge-stats-physics);
+}
+
+.triangle .edge[data-edge="fp-physics"].is-active {
+  stroke: var(--edge-fp-physics);
+}
+
+.triangle[data-triangle="all"] .edge.is-active {
+  stroke-width: 3.25;
+}
+
+.triangle[data-triangle="all"] .edge[data-edge="stats-fp"].is-active {
+  stroke: var(--edge-stats-fp);
+}
+
+.triangle[data-triangle="all"] .edge[data-edge="stats-physics"].is-active {
+  stroke: var(--edge-stats-physics);
+}
+
+.triangle[data-triangle="all"] .edge[data-edge="fp-physics"].is-active {
+  stroke: var(--edge-fp-physics);
+}
+
+.triangle .vtx-dot {
+  stroke: var(--bg);
+  stroke-width: 3;
+}
+
+.triangle .vtx-dot.strand-s { fill: var(--strand-s); }
+.triangle .vtx-dot.strand-f { fill: var(--strand-f); }
+.triangle .vtx-dot.strand-p { fill: var(--strand-p); }
+
+.triangle .vtx-label text {
+  font-family: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.triangle .vtx-label.strand-s text { fill: var(--strand-s); }
+.triangle .vtx-label.strand-f text { fill: var(--strand-f); }
+.triangle .vtx-label.strand-p text { fill: var(--strand-p); }
+
+/* Corner motif */
+#corner-triangle {
+  position: fixed;
+  right: 72px;
+  bottom: 14px;
+  width: 92px;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  overflow: visible;
+}
+
+#corner-triangle.is-on {
+  opacity: 1;
+}
+
+#corner-triangle .edge {
+  stroke: var(--edge-dim);
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  fill: none;
+}
+
+#corner-triangle .edge.is-active {
+  stroke-width: 3.75;
+}
+
+#corner-triangle .edge[data-edge="stats-fp"].is-active {
+  stroke: var(--edge-stats-fp);
+}
+
+#corner-triangle .edge[data-edge="stats-physics"].is-active {
+  stroke: var(--edge-stats-physics);
+}
+
+#corner-triangle .edge[data-edge="fp-physics"].is-active {
+  stroke: var(--edge-fp-physics);
+}
+
+#corner-triangle .vtx-dot {
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+
+#corner-triangle .vtx-dot.strand-s { fill: var(--strand-s); }
+#corner-triangle .vtx-dot.strand-f { fill: var(--strand-f); }
+#corner-triangle .vtx-dot.strand-p { fill: var(--strand-p); }
+
+#corner-triangle .vtx-label {
+  font-family: "Avenir Next", Helvetica, Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+#corner-triangle .vtx-label.strand-s { fill: var(--strand-s); }
+#corner-triangle .vtx-label.strand-f { fill: var(--strand-f); }
+#corner-triangle .vtx-label.strand-p { fill: var(--strand-p); }
+
+/* Progress bar follows active edge / overview */
+.reveal .progress {
+  color: var(--accent);
+  height: 3px;
+}
+
+html[data-edge="all"] .reveal .progress span,
+html[data-edge="none"] .reveal .progress span {
+  background: linear-gradient(
+    90deg,
+    var(--strand-s),
+    var(--strand-f),
+    var(--strand-p)
+  );
+}
+
+html[data-edge="stats-physics"] .reveal .progress span {
+  background: linear-gradient(90deg, var(--strand-s), var(--strand-p));
+}
+
+html[data-edge="stats-fp"] .reveal .progress span {
+  background: linear-gradient(90deg, var(--strand-s), var(--strand-f));
+}
+
+html[data-edge="fp-physics"] .reveal .progress span {
+  background: linear-gradient(90deg, var(--strand-f), var(--strand-p));
+}
+
+html[data-edge="off"] .reveal .progress span {
+  background: var(--muted);
+}
+
+/* Media demo */
+.media-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.media-card {
+  background: #fff;
+  border: 1px solid #ddd8cf;
+  border-radius: 8px;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.media-card .caption {
+  margin-top: 0.5rem;
+  font-size: 0.55em;
+  color: var(--muted);
+  font-family: "Avenir Next", Helvetica, Arial, sans-serif;
+}
+
+.spin-demo {
+  width: 160px;
+  height: 160px;
+  margin: 0.4rem auto;
+  border-radius: 50%;
+  background:
+    conic-gradient(from 0deg, var(--strand-s), var(--strand-f), var(--strand-p), var(--strand-s));
+  animation: spin 2.4s linear infinite;
+  box-shadow: inset 0 0 0 18px var(--bg);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.reveal video {
+  max-width: 100%;
+  border-radius: 6px;
+  background: #111;
+}
+
+.todo {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.85em;
+}
+
+/* Live FRP tracker: slot in the slide + fixed host iframe overlaid on it */
+.frp-demo-slot {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: 420px;
+  border: 1px solid #ddd8cf;
+  border-radius: 6px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.frp-demo-caption {
+  margin-top: 0.35rem;
+  font-size: 0.55em;
+  color: var(--muted);
+  font-family: "Avenir Next", Helvetica, Arial, sans-serif;
+}
+
+#frp-demo-host {
+  position: fixed;
+  z-index: 40;
+  display: none;
+  overflow: hidden;
+  border-radius: 6px;
+  box-shadow: none;
+  pointer-events: auto;
+  background: #fff;
+}
+
+#frp-demo-host.is-active {
+  display: block;
+}
+
+#frp-demo-host iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: #fff;
+}
+
+.reveal pre {
+  font-size: 0.42em;
+  margin: 0.2em 0;
+  width: 100%;
+  box-shadow: none;
+}
+
+.reveal pre code {
+  padding: 0.6em 0.75em;
+}
+
+.reveal table {
+  font-size: 0.72em;
+  border-collapse: collapse;
+  margin: 0.6em auto;
+}
+
+.reveal th,
+.reveal td {
+  border-bottom: 1px solid #ddd8cf;
+  padding: 0.35em 0.75em;
+  text-align: left;
+}
+
+.reveal th {
+  font-family: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+  font-weight: 600;
+}
+
+.reveal img {
+  max-height: 420px;
+  background: #fff;
+  border-radius: 4px;
+}
+
+.reveal img[src$=".gif"] {
+  max-height: 480px;
+}
+
+.reveal .columns p {
+  font-size: 0.78em;
+  line-height: 1.35;
+}
+
+.reveal .slides section ul,
+.reveal .slides section ol {
+  font-size: 0.85em;
+}

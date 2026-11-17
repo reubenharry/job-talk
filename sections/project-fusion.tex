@@ -1,0 +1,155 @@
+\section{Typed fusion}
+\renewcommand{\currentEdge}{fp-physics}
+
+\begin{frame}{Functional Programming + Physics}
+  \begin{center}
+    \ResearchTriangle{fp-physics}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Little contact so far}
+  Functional programming and programming-language theory
+  have made \textbf{little contact} with computational physics.
+
+  \vspace{0.8em}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{Understandable}
+      \begin{itemize}\setlength\itemsep{0.35em}
+        \item Performance is the priority
+        \item You want hardware control
+        \item Imperative / low-level tools dominate
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{But appealing}
+      \begin{itemize}\setlength\itemsep{0.35em}
+        \item Specs of algorithms can be very rich
+        \item Lots of structure to encode
+        \item Types / abstraction can pull their weight
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{A mathematically rich domain}
+  \textbf{Example:} group representations
+  (e.g.\ $SU(2)$ spins in quantum many-body physics).
+
+  \vspace{0.7em}
+  Symmetry-respecting maps (intertwiners) carry nontrivial structure:
+  \begin{itemize}\setlength\itemsep{0.35em}
+    \item Tensor products fuse: $\tfrac12\otimes\tfrac12 \;\cong\; 1\oplus 0$
+    \item Data lives in \textbf{blocks} indexed by irreps
+    \item Shapes are dictated by representation theory --- not by ad hoc bookkeeping
+  \end{itemize}
+
+  \vspace{0.6em}
+  {\small Natural question: can the type system track this structure?}
+\end{frame}
+
+\begin{frame}[fragile]{Length-checked linear algebra}
+  Start simple: dimensions in the types.
+  \vspace{0.5em}
+\begin{semiverbatim}
+vectorExample :: C 3
+vectorExample = vec (1,2,3)
+
+tensorProductExample :: C 3 ⊗ C 2
+tensorProductExample =
+  vec (1,2,3) ⊗ vec (4,5)
+\end{semiverbatim}
+  \vspace{0.5em}
+  Wrong length $\Rightarrow$ \textbf{compile-time} error --- not a silent
+  reshape bug at runtime.
+\end{frame}
+
+\begin{frame}[fragile]{Irreps as types}
+  Same idea, but the ``length'' is a representation:
+  \vspace{0.5em}
+\begin{semiverbatim}
+irrepExample ::
+  VectorOf SU2 (Irrep (Spin (1/2)))
+irrepExample = vec (1,2)
+
+directSumOfIrrepsExample ::
+  Unfused SU2
+    (Irrep (Spin (1/2))
+       :⊕: Irrep (Spin (3/2)))
+directSumOfIrrepsExample =
+  (vec (1,2), vec (3,4,5,6))
+\end{semiverbatim}
+  \vspace{0.4em}
+  {\small $\mathbb{C}^2$ for spin-$\tfrac12$; $\mathbb{C}^4$ for spin-$\tfrac32$ --- checked by the type.}
+\end{frame}
+
+\begin{frame}[fragile]{Fusion at the type level}
+  Tensor products of irreps \textbf{fuse}:
+  $\tfrac12\otimes\tfrac12 \;\cong\; 0\oplus 1$.
+  \vspace{0.45em}
+\begin{semiverbatim}
+unfused :: Unfused SU2
+  (Irrep (Spin (1/2)) :⊗: Irrep (Spin (1/2)))
+unfused = mat ((1,2),(5,6))   -- ℂ² ⊗ ℂ²
+
+fused :: Fused SU2
+  (Irrep (Spin (1/2)) :⊗: Irrep (Spin (1/2)))
+fused = (konst 1, vec (4,5,6))  -- ℂ¹ ⊕ ℂ³
+\end{semiverbatim}
+  \vspace{0.45em}
+  Haskell computes the fused shape \textbf{at compile time};\\
+  a wrong block size is rejected before you run anything.
+\end{frame}
+
+\begin{frame}[fragile]{Keeping only the trivial sector}
+  Intertwiners live in the invariant ($j{=}0$) subspace ---
+  Schur's lemma as a type:
+  \vspace{0.45em}
+\begin{semiverbatim}
+trivialSectorExample ::
+  Sym SU2
+    (Irrep (Spin (1/2)) :⊗: Irrep (Spin (1/2)))
+trivialSectorExample = konst 2   -- ℂ¹
+
+-- 3/2 ⊗ 1/2 = 1 ⊕ 2  (no singlet)
+trivialSectorExample2 ::
+  Sym SU2
+    (Irrep (Spin (3/2)) :⊗: Irrep (Spin (1/2)))
+trivialSectorExample2 = EmptyFTrees
+\end{semiverbatim}
+\end{frame}
+
+\begin{frame}[fragile]{From fusion to categories}
+  Once objects are typed, morphisms compose by the
+  \textbf{same} abstract law in every fusion category.
+  \vspace{0.4em}
+\begin{semiverbatim}
+-- Mac Lane ladder on names ⌜f⌝, ⌜g⌝:
+composeNames @Fib  nf ng
+composeNames @Ising nf ng
+\end{semiverbatim}
+  \vspace{0.5em}
+  \[
+    \lceil f\rceil\otimes\lceil g\rceil
+    \;\xrightarrow{\;\alpha,\;\varepsilon,\;\lambda\;}\;
+    \lceil g\circ f\rceil
+  \]
+  \vspace{0.3em}
+  Fibonacci and Ising share one implementation ---\\
+  the mathematics supplies the abstraction boundary.
+\end{frame}
+
+\begin{frame}{Design principle}
+  The mathematics shows how to \textbf{abstract} and
+  \textbf{design} the software:
+  \begin{itemize}\setlength\itemsep{0.45em}
+    \item Representation theory $\;\Rightarrow\;$ block shapes in the types
+    \item Fusion rules $\;\Rightarrow\;$ checked at compile time
+    \item Compact closed structure $\;\Rightarrow\;$ one compositional API
+      across theories (SU(2), Fib, Ising, \ldots)
+  \end{itemize}
+
+  \vspace{0.7em}
+  {\small Code that looks like the maths --- not an imperative simulation
+  with the same numeric answers.}
+\end{frame}

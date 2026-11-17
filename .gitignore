@@ -1,0 +1,28 @@
+# OS
+.DS_Store
+
+# LaTeX build products
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.vrb
+*.synctex.gz
+main.pdf
+
+# Quarto / Reveal generated output (re-render with: quarto render talk.qmd)
+reveal-demo/talk.html
+reveal-demo/talk_files/
+reveal-demo/.quarto/
+
+# Intermediate animation frames / duplicate GIF build dirs
+# (canonical GIFs live in reveal-demo/media/hmc/)
+figures/hmc/gifs/
+reveal-demo/media/hmc/gifs/*.gif
+
+# Large non-talk PDFs
+figures/hmc/results/Fast_Accurate_Quantum_Mo.pdf

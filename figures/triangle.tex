@@ -1,0 +1,113 @@
+% Reusable research-strand triangle.
+% Usage: \ResearchTriangle{mode}
+%        \ResearchTriangleCorner{mode}
+%   mode ∈ {off, none, all, stats-physics, stats-fp, fp-physics}
+%
+% Vertices (clockwise from top):
+%   Statistics
+%   Functional Programming
+%   Physics
+%
+% Edges:
+%   stats-physics : Statistics -- Physics              (HMC / spin-fermion)
+%   stats-fp      : Statistics -- Functional Programming (FRP)
+%   fp-physics    : Functional Programming -- Physics  (typed fusion)
+
+\newcommand{\currentEdge}{off}
+
+\newcommand{\ResearchTriangle}[1]{%
+  \begin{tikzpicture}[
+    baseline=(current bounding box.center),
+    every node/.style={font=\sffamily},
+    edge dim/.style={draw=black!28, line width=1.0pt, line cap=round},
+    edge hi/.style={draw=black!88, line width=2.4pt, line cap=round},
+    vtx/.style={circle, fill=black!88, draw=white, line width=1.2pt, inner sep=0pt, minimum size=2.4mm},
+    lab/.style={align=center, font=\small\sffamily\bfseries, text=black!88, inner sep=1pt},
+  ]
+    \def\triMode{#1}
+    \coordinate (S) at (90:2.35);
+    \coordinate (F) at (210:2.35);
+    \coordinate (P) at (330:2.35);
+
+    \draw[edge dim] (S) -- (F);
+    \draw[edge dim] (S) -- (P);
+    \draw[edge dim] (F) -- (P);
+
+    \ifstrequal{\triMode}{all}{%
+      \draw[edge hi] (S) -- (F);
+      \draw[edge hi] (S) -- (P);
+      \draw[edge hi] (F) -- (P);
+    }{}
+    \ifstrequal{\triMode}{stats-fp}{%
+      \draw[edge hi] (S) -- (F);
+    }{}
+    \ifstrequal{\triMode}{bayes-fp}{%
+      \draw[edge hi] (S) -- (F);
+    }{}
+    \ifstrequal{\triMode}{stats-physics}{%
+      \draw[edge hi] (S) -- (P);
+    }{}
+    \ifstrequal{\triMode}{bayes-physics}{%
+      \draw[edge hi] (S) -- (P);
+    }{}
+    \ifstrequal{\triMode}{fp-physics}{%
+      \draw[edge hi] (F) -- (P);
+    }{}
+
+    \node[vtx] at (S) {};
+    \node[vtx] at (F) {};
+    \node[vtx] at (P) {};
+    \node[lab, above=10pt] at (S) {Statistics};
+    \node[lab, below=10pt] at (F) {Functional\\Programming};
+    \node[lab, below=10pt] at (P) {Physics};
+  \end{tikzpicture}%
+}
+
+\newcommand{\ResearchTriangleCorner}[1]{%
+  \ifstrequal{#1}{off}{}{%
+    \begin{tikzpicture}[
+      baseline=(current bounding box.center),
+      every node/.style={font=\tiny\sffamily\bfseries},
+      edge dim/.style={draw=black!22, line width=0.55pt, line cap=round},
+      edge hi/.style={draw=black!88, line width=1.35pt, line cap=round},
+      vtx/.style={circle, fill=black!88, draw=white, line width=0.7pt, inner sep=0pt, minimum size=1.5mm},
+    ]
+      \def\triMode{#1}
+      \coordinate (S) at (90:0.78);
+      \coordinate (F) at (210:0.78);
+      \coordinate (P) at (330:0.78);
+
+      \draw[edge dim] (S) -- (F);
+      \draw[edge dim] (S) -- (P);
+      \draw[edge dim] (F) -- (P);
+
+      \ifstrequal{\triMode}{all}{%
+        \draw[edge hi] (S) -- (F);
+        \draw[edge hi] (S) -- (P);
+        \draw[edge hi] (F) -- (P);
+      }{}
+      \ifstrequal{\triMode}{stats-fp}{%
+        \draw[edge hi] (S) -- (F);
+      }{}
+      \ifstrequal{\triMode}{bayes-fp}{%
+        \draw[edge hi] (S) -- (F);
+      }{}
+      \ifstrequal{\triMode}{stats-physics}{%
+        \draw[edge hi] (S) -- (P);
+      }{}
+      \ifstrequal{\triMode}{bayes-physics}{%
+        \draw[edge hi] (S) -- (P);
+      }{}
+      \ifstrequal{\triMode}{fp-physics}{%
+        \draw[edge hi] (F) -- (P);
+      }{}
+
+      \node[vtx] at (S) {};
+      \node[vtx] at (F) {};
+      \node[vtx] at (P) {};
+      \node[above=3pt] at (S) {S};
+      \node[below=3pt] at (F) {F};
+      \node[below=3pt] at (P) {P};
+    \end{tikzpicture}%
+  }%
+}
