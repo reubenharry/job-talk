@@ -420,6 +420,26 @@ html[data-edge="off"] .reveal .progress span {
   flex: none;
 }
 
+.reveal .slides section.frp-hero > h2 {
+  margin-bottom: 0.35em;
+}
+
+.reveal .slides section.frp-hero .frp-demo-slot {
+  width: min(100%, 980px);
+  max-width: 980px;
+  margin-top: 0.15rem;
+}
+
+.reveal .slides section.code-lg pre {
+  font-size: 0.58em;
+  width: 100%;
+  max-width: none;
+}
+
+.reveal .slides section.code-lg .column pre {
+  width: 100%;
+}
+
 @supports (aspect-ratio: 4 / 3) {
   .frp-demo-slot {
     height: auto;
@@ -498,6 +518,20 @@ html[data-edge="off"] .reveal .progress span {
 }
 
 .reveal img[src$=".gif"] {
+  max-height: 520px;
+}
+
+.reveal img[src*="hmc_trajectory"] {
+  max-height: 560px;
+  width: 100%;
+}
+
+.reveal img.results-compact,
+.reveal img[src*="panel_longrun"] {
+  max-height: 340px;
+}
+
+.reveal img[src*="stationary_distribution_step_size"] {
   max-height: 480px;
 }
 

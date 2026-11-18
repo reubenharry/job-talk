@@ -1,5 +1,5 @@
 ---
-title: "Probability, Programming and Physics"
+title: "Physics, Probability, and Programming"
 subtitle: "Postdoctoral Research Scientist, UC Berkeley"
 author: "Reuben Cohn-Gordon"
 format:
@@ -128,114 +128,105 @@ Innovations can travel in both directions.
 
 :::: {.columns}
 ::: {.column width="50%"}
-Target density (known up to $Z$):
+Density:
 
 $$
-\pi(q) = \frac{1}{Z}\,e^{-U(q)}
+{\color{#2a9a93}{\pi(q)}} = \frac{1}{Z}\,e^{-{\color{#2a9a93}{U(q)}}}
 $$
 
-Hamiltonian on extended space $(q,p)$:
+Hamiltonian:
 
 $$
-H(q,p) = U(q) + \tfrac{1}{2}\,p^\top M^{-1}p
+{\color{#3d6aad}{H(q,p)}} = {\color{#2a9a93}{U(q)}} + \tfrac{1}{2}\,p^\top M^{-1}p
 $$
-
-Canonical joint and marginal:
 
 $$
 \begin{aligned}
 p_{\mathrm{HMC}}(q,p)
-&\mathrel{\style{font-size:1.35em}{∝}} e^{-H(q,p)} \\
+&\propto e^{-{\color{#3d6aad}{H(q,p)}}} \\
 \int p_{\mathrm{HMC}}(q,p)\,dp
-&= \pi(q)
+&= {\color{#2a9a93}{\pi(q)}}
 \end{aligned}
 $$
 :::
 ::: {.column width="50%"}
-Hamilton's equations:
+Dynamics:
 
 $$
 \begin{aligned}
-\dot q &= \nabla_p H = M^{-1}p \\
-\dot p &= -\nabla_q H = -\nabla U(q)
+\dot q &= \nabla_p {\color{#3d6aad}{H}} = M^{-1}p \\
+\dot p &= -\nabla_q {\color{#3d6aad}{H}} = -\nabla {\color{#2a9a93}{U}}(q)
 \end{aligned}
 $$
 
-Numerical integration with step size $\varepsilon$:
+Leapfrog:
 
 $$
 \begin{aligned}
-p &\leftarrow p - \tfrac{\varepsilon}{2}\nabla U(q) \\
+p &\leftarrow p - \tfrac{\varepsilon}{2}\nabla {\color{#2a9a93}{U}}(q) \\
 q &\leftarrow q + \varepsilon\, M^{-1}p \\
-p &\leftarrow p - \tfrac{\varepsilon}{2}\nabla U(q)
+p &\leftarrow p - \tfrac{\varepsilon}{2}\nabla {\color{#2a9a93}{U}}(q)
 \end{aligned}
 $$
 :::
 ::::
 
-## HMC dynamics {data-edge="stats-physics"}
+## HMC dynamics: Gaussian example {data-edge="stats-physics"}
 
-Leapfrog on a Gaussian target
-$\displaystyle
-\pi(q)\mathrel{\style{font-size:1.35em}{∝}} e^{-q^{2}/2},
+::: {.eq-hero}
+$$
+{\color{#2a9a93}{\pi(q)}}\propto e^{-q^{2}/2},
 \qquad
-H(q,p)=\tfrac{1}{2}q^{2}+\tfrac{1}{2}p^{2}
-$:
-phase-space trajectory and energy.
+{\color{#3d6aad}{H(q,p)}}=\tfrac{1}{2}q^{2}+\tfrac{1}{2}p^{2}
+$$
+:::
 
-![](media/hmc/hmc_trajectory.gif){fig-alt="Discretized HMC trajectory with energy conservation" width="100%"}
+![](media/hmc/hmc_trajectory.gif){fig-alt="HMC trajectory, energy conservation, and square of points thermalizing under Langevin dynamics" width="100%"}
 
-[Left: $(q,p)$ on energy contours. Right: $H(q,p)$ vs step — nearly conserved.]{.muted}
+[Left: leapfrog trajectory. Middle: $H$ vs step. Right: a square of points under Langevin → stationary.]{.muted}
 
 ## Idea 1: target microcanonical distribution {data-edge="stats-physics"}
 
 :::: {.columns}
 ::: {.column width="50%"}
-Same target:
+Density:
 
 $$
-\pi(x) = \frac{1}{Z}\,e^{-L(x)}
+{\color{#2a9a93}{\pi(x)}} = \frac{1}{Z}\,e^{-{\color{#2a9a93}{L(x)}}}
 $$
 
-Log-kinetic Hamiltonian
-(Steeg–Galstyan / MCLMC):
+Hamiltonian:
 
 $$
-H(x,\Pi)
+{\color{#3d6aad}{H(x,\Pi)}}
 =
-L(x)
+{\color{#2a9a93}{L(x)}}
 +
 (d-1)\log\|\Pi\|
 $$
 
-Microcanonical joint and marginal
-($u=\Pi/\|\Pi\|$):
-
 $$
 \begin{aligned}
 p_{\mathrm{MCLMC}}(x,u)
-&\mathrel{\style{font-size:1.35em}{∝}}
-e^{-L(x)}\,\delta(\|u\|-1) \\
+&\propto
+e^{-{\color{#2a9a93}{L(x)}}}\,\delta(\|u\|-1) \\
 \int p_{\mathrm{MCLMC}}(x,u)\,du
-&= \pi(x)
+&= {\color{#2a9a93}{\pi(x)}}
 \end{aligned}
 $$
 :::
 ::: {.column width="50%"}
-Isokinetic dynamics
-($\lvert u\rvert{=}1$ preserved):
+Dynamics:
 
 $$
 \begin{aligned}
 \dot x &= u \\
 \dot u &=
--\frac{\bigl(I-uu^\top\bigr)\nabla L(x)}{d-1}
+-\frac{\bigl(I-uu^\top\bigr)\nabla {\color{#2a9a93}{L}}(x)}{d-1}
 \end{aligned}
 $$
 
-Exact velocity update $B_\varepsilon$
-($\delta=\varepsilon\|\nabla L\|/(d{-}1)$,\
-$e=-\nabla L/\|\nabla L\|$):
+Update:
 
 $$
 \begin{aligned}
@@ -248,6 +239,8 @@ u+(\sinh\delta+(e\cdot u)(\cosh\delta-1))\,e
 }
 \end{aligned}
 $$
+
+[$\delta=\varepsilon\|\nabla L\|/(d{-}1)$,\; $e=-\nabla L/\|\nabla L\|$]{.muted}
 :::
 ::::
 
@@ -258,12 +251,12 @@ $$
 Skip the Metropolis–Hastings correction. Discretization bias is **controlled** by tuning step size to target energy error variance, trading a little bias for much lower variance in high dimension.
 
 :::: {.columns}
-::: {.column width="50%"}
-![](media/hmc/scaling.png){fig-alt="Gradient cost vs dimension: adjusted vs unadjusted"}
+::: {.column width="58%"}
+![](media/hmc/stationary_distribution_step_size.gif){fig-alt="Stationary distribution of discretized Gaussian HMC as step size increases"}
 
-[Adjusted cost $\sim d^{1/4}$; unadjusted stays flat.]{.muted}
+[As $\varepsilon$ grows, the leapfrog stationary drifts from the target Gaussian.]{.muted}
 :::
-::: {.column width="50%"}
+::: {.column width="42%"}
 ![](media/hmc/bias-variance-diagram.png){fig-alt="Bias–variance tradeoff for unadjusted HMC"}
 
 [Trade-off: gain bias but lose variance.]{.muted}
@@ -279,7 +272,7 @@ Collaboration with **Peter Lunts** (formerly CCQ). Lattice **spin–fermion** mo
 ::: {.eq-compact}
 $$
 p_{\mathrm{SF}}(\phi,\psi)
-\mathrel{\style{font-size:1.35em}{∝}}
+\propto
 e^{-(S_b(\phi)+S_{\mathrm{pf}}(\phi,\psi))}
 \qquad
 S_{\mathrm{pf}}
@@ -360,20 +353,29 @@ Stochastic traces $\Rightarrow$ extra MC noise in $n(\mathbf{k})$.
 
 From *Cohn-Gordon, Pescia, Robnik, Hearth, Seljak, Lunts (Neurips 2026)*:
 
-![](media/hmc/results/panel_longrun.png){fig-alt="Fermion occupation, efficiency ratio, and bias diagnostics" width="100%"}
-
-[$n(\mathbf{k})$; uMCLMC / aHMC efficiency; asymptotic bias $b_a$ and diagnostic $b_\epsilon$.]{.muted}
-
-## Results: efficiency vs $\lambda$ {data-edge="stats-physics"}
-
 :::: {.columns}
 ::: {.column width="55%"}
-![](media/hmc/results/efficiency_plot.png){fig-alt="ESS per gradient vs lambda for uMCLMC, uLMC, aHMC"}
+![](media/hmc/scaling.png){fig-alt="Gradient cost vs dimension: adjusted vs unadjusted"}
+
+[Adjusted cost $\sim d^{1/4}$; unadjusted stays flat.]{.muted}
 :::
 ::: {.column width="45%"}
 - Unadjusted **uMCLMC** / **uLMC** beat adjusted HMC by roughly an order of magnitude in ESS per gradient
 - Accuracy matched (bias controlled by step-size tuning)
 - Gains grow with system size
+:::
+::::
+
+## Results: efficiency vs $\lambda$ {data-edge="stats-physics"}
+
+:::: {.columns}
+::: {.column width="52%"}
+![](media/hmc/results/panel_longrun.png){.results-compact fig-alt="Fermion occupation, efficiency ratio, and bias diagnostics"}
+
+[$n(\mathbf{k})$; efficiency; bias $b_a$, $b_\epsilon$.]{.muted}
+:::
+::: {.column width="48%"}
+![](media/hmc/results/efficiency_plot.png){fig-alt="ESS per gradient vs lambda for uMCLMC, uLMC, aHMC"}
 :::
 ::::
 
@@ -516,7 +518,7 @@ x \sim \mathrm{N}(0,1) \\[0.35em]
 \texttt{likelihood}&:\quad
 p(y\mid x)=\mathrm{N}(y;\,x,0.5^2) \\[0.35em]
 \texttt{posterior}&:\quad
-p(x\mid y)\mathrel{\style{font-size:1.35em}{∝}} p(x)\,p(y\mid x)
+p(x\mid y)\propto p(x)\,p(y\mid x)
 \end{aligned}
 $$
 
@@ -524,16 +526,26 @@ $$
 :::
 ::::
 
-## Dynamical systems {data-edge="stats-fp"}
+## Dynamical systems {.frp-hero data-edge="stats-fp"}
 
-Stan targets **static** models (batch data, fixed dimension).
+::: {.frp-demo-slot data-frp-stage="prior"}
+:::
 
-Many problems unfold online: a latent state moves; noisy observations arrive as a stream; we want beliefs that update in real time.
-
-## Noisy observations {data-edge="stats-fp"}
+## Noisy observations {.frp-hero data-edge="stats-fp"}
 
 ::: {.frp-demo-slot data-frp-stage="obs"}
 :::
+
+## Particle filter {.frp-hero data-edge="stats-fp"}
+
+::: {.frp-demo-slot data-frp-stage="particles"}
+:::
+
+## The conceptual picture (Feynman–Kac) {data-edge="stats-fp"}
+
+Traditionally, an implementation would interleave several things: time, inference method and model
+
+But we can decouple these concerns
 
 ## The conceptual picture (Feynman–Kac) {data-edge="stats-fp"}
 
@@ -575,66 +587,40 @@ Many problems unfold online: a latent state moves; noisy observations arrive as 
 ::::
 :::
 
-## Particle filter {data-edge="stats-fp"}
-
-::: {.frp-demo-slot data-frp-stage="particles"}
-:::
-
-## What a particle filter approximates {data-edge="stats-fp"}
-
-$$\mathbb{Q}
-\;\approx\;
-\sum_{i=1}^{N}
-W^{(i)}\,\delta_{X^{(i)}}
-$$
-
-- draw paths from the prior dynamics $\mathbb{P}$
-- accumulate weights $w(X^{(i)})$ from the observations
-- resample $\Rightarrow$ a **normalized** cloud of trajectories
-
-[The blue swarm is this cloud at the current time.]{.muted}
-
-## Code faithful to the maths {data-edge="stats-fp"}
-
-Now: write the model so the types match that story —
-and let the library derive the particle filter.
-
-## Prior as a process {data-edge="stats-fp"}
+## The prior as a stochastic process {.code-lg data-edge="stats-fp"}
 
 :::: {.columns}
 ::: {.column width="52%"}
 ```haskell
-prior :: () >--> Position
-prior = proc _ -> do
-  x <- stochasticOscillator 0 0 -< 1
-  y <- stochasticOscillator 0 0 -< 1
-  returnA -< V2 x y
+prior :: SignalOf Position
+prior = _ -> do
+  x <- stochasticOscillator -< vec (1,1)
+  y <- stochasticOscillator -< vec (1,1)
+  return -< vec (x, y)
 ```
 :::
 ::: {.column width="48%"}
-`() >-> Position`: a signal with no input.
 
-Running it **samples paths** from $\mathbb{P}$.
+
+Running it means drawing a single sample from the distribution over trajectories.
 
 [Decoupled from the clock / timestep / runner.]{.muted}
 :::
 ::::
 
-## Conditioning = reweighting {data-edge="stats-fp"}
+## Conditioning = reweighting {.code-lg data-edge="stats-fp"}
 
 :::: {.columns}
-::: {.column width="52%"}
+::: {.column width="68%"}
 ```haskell
-posterior ::
-  Observation >-/-> Position
-posterior = proc obs -> do
+posterior :: SignalFunction Observation Position
+posterior = obs -> do
   latent <- prior -< ()
-  observe -<
-    likelihood obs latent
-  returnA -< latent
+  observe -< likelihood obs latent
+  return -< latent
 ```
 :::
-::: {.column width="48%"}
+::: {.column width="32%"}
 `observe` multiplies by $g(Y_t\mid X_t)$.
 
 `>-/->` = unnormalized path measure
@@ -643,21 +629,20 @@ $\mathbb{Q}$ before dividing by $Z$.
 :::
 ::::
 
-## Particle filter from the unnormalized measure {data-edge="stats-fp"}
+## Particle filter from the unnormalized measure {.code-lg data-edge="stats-fp"}
 
 :::: {.columns}
-::: {.column width="48%"}
+::: {.column width="60%"}
 ```haskell
-inference ::
-  Observation >--> [(Position, Weight)]
-inference =
-  particleFilter params {n = 100}
+inference :: SignalFunction Observation [Position]
+inference = particleFilter 
+    params {n = 100}
     posterior
 ```
 
 [Same model; SMC derived by the library — like Stan automating HMC.]{.muted}
 :::
-::: {.column width="52%"}
+::: {.column width="40%"}
 ::: {.frp-demo-slot data-frp-stage="particles"}
 :::
 :::
@@ -728,25 +713,29 @@ What we want is **compositionality**:
 >
 > — Terence Tao (on Lean formalization)
 
-## Type driven development in physics {data-edge="fp-physics"}
+## Type driven development in physics {.code-lg data-edge="fp-physics"}
 
-Schematic Krylov solver — change what it acts on:
+Most abstract — any inner-product space $v$:
 
-```lean
--- 1. concrete: dense matrix
-krylov : Matrix → Vec → Vec
-
--- 2. switch realization
-krylov : SparseMatrix → Vec → Vec
---   checker underlines call sites that
---   assumed dense layout / indexing
-
--- 3. polymorphic, with a constraint
-krylov : {A : Type} → [HasMatVec A]
-      → A → Vec → Vec
+```haskell
+conjugateGradient
+  :: ( Ord (Scalar v)
+     , TensorSpace v, InnerSpace v
+     , Fractional (Scalar v) )
+  => Scalar v -> (v -+> v) -> (v -+> v)
 ```
 
-[`HasMatVec`: only need $v\mapsto Av$ — dense, sparse, or a black-box linear map.]{.muted}
+Concrete instantiations (same algorithm):
+
+```haskell
+-- dense length-n vectors
+conjugateGradient
+  :: Double -> (Vec n -+> Vec n) -> (Vec n -+> Vec n)
+
+-- Mat n n supplies the linear map  (·) : Vec n -+> Vec n
+```
+
+Polymorphism guarantees you are not specializing to e.g.\ complex numbers — only what the constraints require.
 
 ## Linear algebra, two views {data-edge="fp-physics"}
 
@@ -761,89 +750,50 @@ krylov : {A : Type} → [HasMatVec A]
 ::: {.column width="50%"}
 **Mathematical**
 
-- A tensor is a multilinear map - Many realizations: dense, sparse, blocked, symmetry-reduced, …
+- A tensor is a multilinear map
+- Many realizations: dense, sparse, blocked, symmetry-reduced, …
 - Choose the representation later
 :::
 ::::
 
 Specifying the math first makes it natural to **swap realizations** without rewriting the algorithm.
 
-## Case study: representations {data-edge="fp-physics"}
+## Representations, cleanly {data-edge="fp-physics"}
 
-Fix a group $G$ (e.g. $SU(2)$).
-
-**Irreps:** the indecomposable building blocks — labels $a,b,\ldots$ (for $SU(2)$: spins $0,\tfrac12,1,\tfrac32,\ldots$).
-
-Every finite-dimensional representation decomposes as
+Fix a group $G$ (e.g.\ $SU(2)$). Irreps $a,b,\ldots$ with carriers $V_a$.
 
 $$
-V \;\cong\; \bigoplus_{a} \; m_a \, V_a
+V \;\cong\; \bigoplus_{a} m_a\, V_a
+\qquad
+\rho_a: G\to\mathrm{GL}(V_a)
 $$
 
-a direct sum of irreps, each with a multiplicity $m_a$.
-
-## Carrier space of an irrep {data-edge="fp-physics"}
-
-To each irrep label $a$ associate a vector space $V_a$:
-
-```lean
--- Lean sketch
-variable (G : Type) [Group G]
-variable (Irrep : Type → Type)              -- labels for G
-variable (V : (G : Type) → Irrep G → Type)  -- carriers
-
--- e.g. V SU2 (1/2) ≃ ℂ²,  V SU2 1 ≃ ℂ³, …
-```
-
-- $V_{1/2} \cong \mathbb{C}^2$, $V_1 \cong \mathbb{C}^3$, $V_j \cong \mathbb{C}^{2j+1}$
-- Tensor products of carriers fuse back into irreps: $\tfrac12\otimes\tfrac12 \cong 0\oplus 1$
-
-## Group elements act as operators {data-edge="fp-physics"}
-
-A group element $g\in G$ maps to a linear operator on each irrep's carrier:
-
-```lean
--- ρ : (G : Type) → (g : G) → (a : Irrep G) → (V G a →ₗ[ℂ] V G a)
-def ρ (G) [Group G] (a : Irrep G) (g : G) : V G a →ₗ[ℂ] V G a
-
--- homomorphism laws:
---   ρ G a 1 = id
---   ρ G a (g * h) = ρ G a g ∘ₗ ρ G a h
-```
-
-[Same abstract type for every irrep — only the concrete matrix for $V_a$ changes with $a$.]{.muted}
-
-## Intertwiners = trivial sector {data-edge="fp-physics"}
-
-A **symmetric** (equivariant) map $A\to B$ is a linear map that *commutes with the action*:
-
-```lean
-def Intertwiner (G) [Group G] (a b : Irrep G) :=
-  { f : V G a →ₗ[ℂ] V G b //
-      ∀ g, f ∘ₗ ρ G a g = ρ G b g ∘ₗ f }
-```
-
-Hom-space dictionary:
-
 $$
-\mathrm{Hom}(A,B)
+A \multimap B
 \;\cong\;
-A^{*}\otimes B
-\;\cong\;
-\bigoplus_{j} m_{j}\, V_j
+\bigl(A^{*}\otimes B\bigr) \
+\cong \bigoplus_{c} m_c\, V_c
 $$
 
-The maps that commute with $G$ are exactly the **trivial sector** ($j{=}0$) — only that block need be kept.
+Fusion dictates shapes; Schur collapses storage to that sector.
 
-## What the maths buys you {data-edge="fp-physics"}
+## Examples from `typed-fusion` {.code-lg data-edge="fp-physics"}
 
-Once $\mathrm{Hom}_G(A,B)$ is the trivial sector of $A^{*}\otimes B$:
+```haskell
+-- carriers checked at the type level
+x :: C 2 ⊗ C 3
+x = vec (1,2) ⊗ vec (4,5,6)
 
-- Storage collapses to a handful of blocks (Schur)
-- Shapes are dictated by fusion rules, not bookkeeping
-- The same abstract API can target dense arrays *or* symmetry-reduced tensors
+-- ½ ⊗ ½ ≅ 0 ⊕ 1  (fused)
+halfHalf :: Fused SU2 (Irrep (Spin (1/2)) :⊗: Irrep (Spin (1/2)))
+halfHalf = (konst 1, vec (4,5,6))
 
-[Next: track those blocks in the type system (`typed-fusion` / Lean).]{.muted}
+-- keep only the trivial sector (intertwiners)
+singlet :: Sym SU2 (Irrep (Spin (1/2)) :⊗: Irrep (Spin (1/2)))
+singlet = konst 2
+```
+
+[Wrong lengths / wrong sectors fail to compile.]{.muted}
 
 ## Outlook {data-edge="all"}
 

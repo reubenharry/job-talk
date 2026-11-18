@@ -2,14 +2,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.colors import LinearSegmentedColormap
-from scipy.integrate import solve_ivp
-from scipy.stats import multivariate_normal
-import seaborn as sns
 import matplotlib.animation as animation
 
-# Set style for publication-quality plots
-plt.style.use('seaborn-v0_8-whitegrid')
-sns.set_palette("husl")
+try:
+    from scipy.integrate import solve_ivp
+    from scipy.stats import multivariate_normal
+except ImportError:  # optional for the talk GIFs we regenerate most often
+    solve_ivp = None
+    multivariate_normal = None
+
+try:
+    import seaborn as sns
+
+    plt.style.use("seaborn-v0_8-whitegrid")
+    sns.set_palette("husl")
+except ImportError:
+    plt.style.use("default")
 
 def hamiltonian(q, p, m=1.0, k=1.0):
     """1D harmonic oscillator Hamiltonian: H = p^2/(2m) + (k/2)q^2"""
@@ -346,60 +354,130 @@ def plot_comprehensive_hmc():
     plt.tight_layout()
     plt.savefig('hmc_comprehensive_visualization.png', dpi=300, bbox_inches='tight')
 
+def underdamped_langevin_step(q, p, dt, m=1.0, k=1.0, gamma=0.6, T=1.0, rng=None):
+    """One Euler–Maruyama step of underdamped Langevin (vectorized OK)."""
+    if rng is None:
+        rng = np.random
+    noise = rng.normal(0.0, np.sqrt(2.0 * gamma * T * m * dt), size=np.shape(p))
+    p_new = p + (-k * q - gamma * p) * dt + noise
+    q_new = q + (p_new / m) * dt
+    return q_new, p_new
+
+
 def create_basic_trajectory_animation():
-    """Show a single HMC trajectory evolving step by step with energy change"""
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
-    
-    # Setup
+    """Three panels: leapfrog trajectory, energy, and a square of points
+    thermalizing under underdamped Langevin with small steps.
+    """
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 5.4))
+
     m, k = 1.0, 1.0
-    eps = 0.8  # Bigger steps
-    n_frames = 30
-    
-    # Initial point
-    q, p = 2.0, 1.5
-    
-    # Energy contours (static background)
+    eps = 0.8
+    n_frames = 48
+
+    # Single trajectory (panels 1–2) — leapfrog HMC
+    q0, p0 = 2.0, 1.5
+    q_traj = [q0]
+    p_traj = [p0]
+    energy_traj = [hamiltonian(q0, p0, m, k)]
+    q, p = q0, p0
+    for _ in range(n_frames - 1):
+        q, p = leapfrog_step(q, p, eps, m, k)
+        q_traj.append(q)
+        p_traj.append(p)
+        energy_traj.append(hamiltonian(q, p, m, k))
+    q_traj = np.asarray(q_traj)
+    p_traj = np.asarray(p_traj)
+    energy_traj = np.asarray(energy_traj)
+    e_lo, e_hi = energy_traj.min() - 0.15, energy_traj.max() + 0.15
+
+    # Square of points under Langevin (panel 3)
+    rng = np.random.default_rng(7)
+    n_grid = 12
+    q_grid = np.linspace(1.5, 2.5, n_grid)
+    p_grid = np.linspace(1.0, 2.0, n_grid)
+    Q0, P0 = np.meshgrid(q_grid, p_grid)
+    Q_hist = [Q0.copy()]
+    P_hist = [P0.copy()]
+    Q_curr, P_curr = Q0.copy(), P0.copy()
+    dt = 0.04
+    gamma = 0.7
+    substeps = 3  # small steps per frame → smooth thermalization
+    for _ in range(n_frames - 1):
+        for _sub in range(substeps):
+            Q_curr, P_curr = underdamped_langevin_step(
+                Q_curr, P_curr, dt, m=m, k=k, gamma=gamma, T=1.0, rng=rng
+            )
+        Q_hist.append(Q_curr.copy())
+        P_hist.append(P_curr.copy())
+
     Q, P, H = generate_energy_contours((-3, 3), (-3, 3), m, k)
     levels = np.linspace(0.5, 4.5, 9)
-    
+
     def animate(frame):
         ax1.clear()
         ax2.clear()
-        
-        # Calculate trajectory up to current frame
-        q_traj, p_traj = [q], [p]
-        energy_traj = [hamiltonian(q, p, m, k)]
-        
-        for i in range(frame):
-            q_new, p_new = leapfrog_step(q_traj[-1], p_traj[-1], eps, m, k)
-            q_traj.append(q_new)
-            p_traj.append(p_new)
-            energy_traj.append(hamiltonian(q_new, p_new, m, k))
-        
-        # Plot 1: Phase space trajectory
-        ax1.contour(Q, P, H, levels=levels, colors='gray', alpha=0.6)
-        ax1.plot(q_traj, p_traj, 'b-', linewidth=2, alpha=0.7)
-        ax1.plot(q_traj[-1], p_traj[-1], 'ro', markersize=12)
-        
+        ax3.clear()
+
+        # Panel 1: single trajectory
+        ax1.contour(Q, P, H, levels=levels, colors="gray", alpha=0.55, linewidths=1)
+        ax1.plot(q_traj[: frame + 1], p_traj[: frame + 1], "b-", linewidth=2, alpha=0.75)
+        ax1.plot(q_traj[frame], p_traj[frame], "ro", markersize=10)
         ax1.set_xlim(-3, 3)
         ax1.set_ylim(-3, 3)
-        ax1.set_title(f'HMC Trajectory - Step {frame}')
-        ax1.set_xlabel('Position (q)')
-        ax1.set_ylabel('Momentum (p)')
+        ax1.set_title(f"Trajectory — step {frame}")
+        ax1.set_xlabel("Position (q)")
+        ax1.set_ylabel("Momentum (p)")
         ax1.grid(True, alpha=0.3)
-        ax1.set_aspect('equal')
-        
-        # Plot 2: Energy over time
-        steps = range(len(energy_traj))
-        ax2.plot(steps, energy_traj, 'b-', linewidth=2, marker='o', markersize=4)
-        ax2.set_xlabel('Step')
-        ax2.set_ylabel('Energy H(q,p)')
-        ax2.set_title('Energy Conservation')
+        ax1.set_aspect("equal")
+
+        # Panel 2: energy
+        ax2.plot(
+            range(frame + 1),
+            energy_traj[: frame + 1],
+            "b-",
+            linewidth=2,
+            marker="o",
+            markersize=3.5,
+        )
+        ax2.set_xlim(0, n_frames - 1)
+        ax2.set_ylim(e_lo, e_hi)
+        ax2.set_xlabel("Step")
+        ax2.set_ylabel("Energy H(q,p)")
+        ax2.set_title("Energy conservation")
         ax2.grid(True, alpha=0.3)
-        ax2.set_ylim(min(energy_traj) - 0.1, max(energy_traj) + 0.1)
-    
-    anim = animation.FuncAnimation(fig, animate, frames=n_frames, interval=150)
-    anim.save('hmc_trajectory.gif', writer='pillow')
+
+        # Panel 3: square → stationary under Langevin
+        ax3.contour(Q, P, H, levels=levels, colors="gray", alpha=0.4, linewidths=1)
+        ax3.plot(
+            Q0.ravel(),
+            P0.ravel(),
+            "o",
+            color="#9bb7d4",
+            markersize=3.5,
+            alpha=0.55,
+            label="initial square",
+        )
+        ax3.plot(
+            Q_hist[frame].ravel(),
+            P_hist[frame].ravel(),
+            "o",
+            color="#c0392b",
+            markersize=4.0,
+            alpha=0.8,
+            label="current",
+        )
+        ax3.set_xlim(-3, 3)
+        ax3.set_ylim(-3, 3)
+        ax3.set_title("Langevin → stationary")
+        ax3.set_xlabel("Position (q)")
+        ax3.set_ylabel("Momentum (p)")
+        ax3.legend(loc="upper right", fontsize=8, framealpha=0.9)
+        ax3.grid(True, alpha=0.3)
+        ax3.set_aspect("equal")
+
+    fig.tight_layout()
+    anim = animation.FuncAnimation(fig, animate, frames=n_frames, interval=120)
+    anim.save("hmc_trajectory.gif", writer="pillow", dpi=110)
     print("Saved: hmc_trajectory.gif")
 
 def create_measure_preservation_animation():
