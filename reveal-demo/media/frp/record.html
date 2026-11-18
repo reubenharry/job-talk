@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Record FRP WASM</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #fff;
+        overflow: hidden;
+        width: 960px;
+        height: 720px;
+      }
+      iframe {
+        border: 0;
+        width: 960px;
+        height: 720px;
+        display: block;
+      }
+      #hud {
+        position: fixed;
+        left: 8px;
+        top: 8px;
+        font: 12px/1.3 system-ui, sans-serif;
+        background: rgba(255, 255, 255, 0.85);
+        padding: 4px 8px;
+        border-radius: 4px;
+        z-index: 2;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="hud">waiting…</div>
+    <iframe id="frame" title="demo"></iframe>
+    <script>
+      const params = new URLSearchParams(location.search);
+      const stage = params.get("stage") || "prior";
+      const seconds = Number(params.get("seconds") || "12");
+      const fps = Number(params.get("fps") || "20");
+      const hud = document.getElementById("hud");
+      const iframe = document.getElementById("frame");
+
+      window.__RECORD__ = {
+        status: "loading",
+        stage,
+        frames: [],
+        done: false,
+      };
+
+      iframe.src = `embed.html?stage=${encodeURIComponent(stage)}&v=rec1`;
+
+      function setHud(msg) {
+        hud.textContent = msg;
+        window.__RECORD__.status = msg;
+      }
+
+      function sleep(ms) {
+        return new Promise((r) => setTimeout(r, ms));
+      }
+
+      async function waitReady(timeoutMs = 60000) {
+        const t0 = performance.now();
+        while (performance.now() - t0 < timeoutMs) {
+          try {
+            const doc = iframe.contentDocument;
+            const canvas = doc && doc.getElementById("sim");
+            const status = doc && doc.getElementById("status");
+            if (
+              canvas &&
+              status &&
+              /Running|Restarted/i.test(status.textContent || "")
+            ) {
+              // ensure stage applied
+              iframe.contentWindow.postMessage(
+                { type: "frp-demo-restart", stage },
+                "*"
+              );
+              await sleep(400);
+              return canvas;
+            }
+          } catch (_) {}
+          await sleep(100);
+        }
+        throw new Error("demo not ready");
+      }
+
+      async function record() {
+        try {
+          setHud(`loading ${stage}`);
+          const canvas = await waitReady();
+          // hide hud during capture so it is not in frames
+          hud.style.display = "none";
+          await sleep(200);
+
+          const n = Math.round(seconds * fps);
+          const interval = 1000 / fps;
+          const frames = [];
+          for (let i = 0; i < n; i++) {
+            const tStart = performance.now();
+            frames.push(canvas.toDataURL("image/png"));
+            const elapsed = performance.now() - tStart;
+            const wait = Math.max(0, interval - elapsed);
+            await sleep(wait);
+          }
+          window.__RECORD__.frames = frames;
+          window.__RECORD__.done = true;
+          window.__RECORD__.status = `done ${frames.length}`;
+          hud.style.display = "block";
+          setHud(`done ${frames.length} frames`);
+        } catch (err) {
+          window.__RECORD__.status = `error: ${err.message}`;
+          window.__RECORD__.done = true;
+          hud.style.display = "block";
+          setHud(window.__RECORD__.status);
+          console.error(err);
+        }
+      }
+
+      iframe.addEventListener("load", () => {
+        // give WASM a moment after iframe load
+        setTimeout(record, 50);
+      });
+    </script>
+  </body>
+</html>

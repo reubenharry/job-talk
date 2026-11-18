@@ -1,0 +1,12 @@
+Portrait sources (thanks slide):
+- Peter Lunts: Simons Foundation / Flatiron CCQ profile
+- Jakob Robnik: https://jakobrobnik.github.io/images/profile.jpg
+- Uroš Seljak: UC Berkeley Astronomy faculty page
+- Dries Sels: Simons Foundation / Flatiron CCQ profile
+- Gabriel Pescia: initials placeholder — replace with a real headshot when available
+- Michael Lindsey: https://quantumtative.github.io/lindseyPic4.jpeg
+
+Border colors follow talk.css strand/edge tokens:
+- strand-s (#1f6f6a): Jakob Robnik, Uroš Seljak (MCLMC / stats methods)
+- strand-p (#2f4d7a): Dries Sels (physics / counterdiabatic)
+- edge-stats-physics (#275f72): Peter Lunts, Gabriel Pescia, Michael Lindsey (QMC / HMC applications)

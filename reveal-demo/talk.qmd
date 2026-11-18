@@ -26,7 +26,7 @@ title-slide-attributes:
 :::
 ::: {.column width="58%"}
 ::: {.center-block}
-::: {.research-triangle data-triangle="all"}
+::: {.research-triangle .triangle-lg data-triangle="all"}
 :::
 :::
 :::
@@ -36,11 +36,11 @@ title-slide-attributes:
 
 :::: {.columns}
 ::: {.column width="50%"}
-1. HMC for a spin–fermion model \
+1. Fast HMC for a spin–fermion model \
    [[Statistics]{.strand-s} + [Physics]{.strand-p}]{.edge-pair}
-2. Functional reactive programming \
+2. Reactive probabilistic programming \
    [[Statistics]{.strand-s} + [Functional Programming]{.strand-f}]{.edge-pair}
-3. Typed fusion \
+3. Formalization of physics \
    [[Functional Programming]{.strand-f} + [Physics]{.strand-p}]{.edge-pair}
 :::
 ::: {.column width="50%"}
@@ -57,19 +57,23 @@ title-slide-attributes:
 :::
 :::
 
-## Sampling is the shared bottleneck {data-edge="stats-physics"}
+## A common problem {data-edge="stats-physics"}
 
 :::: {.columns}
 ::: {.column width="33%"}
 **Bayes**
 
 $$
-p(\theta\mid y)
+\underbrace{p(\theta\mid y)}_{\text{posterior}}
 =
-\frac{p(y\mid\theta)\,p(\theta)}{p(y)}
+\frac{
+\overbrace{p(y\mid\theta)}^{\text{likelihood}}
+\,
+\overbrace{p(\theta)}^{\text{prior}}
+}{p(y)}
 $$
 
-Need samples from the posterior when $p(y)$ is intractable.
+Need to calculate expectation with respect to the posterior.
 :::
 ::: {.column width="33%"}
 **Stat.~mech.**
@@ -80,7 +84,7 @@ p(x)
 \frac{e^{-\beta H(x)}}{Z}
 $$
 
-Need samples from the Boltzmann distribution when $Z$ is intractable.
+Need to calculate expectation to predict chemical/material properties.
 :::
 ::: {.column width="34%"}
 **Quantum (path integral)**
@@ -91,21 +95,21 @@ $$
 \mathbb{E}_{\text{paths}}[O]
 $$
 
-In $d{+}1$ dimensions, observables become expectations under a distribution over paths.
+In $d{+}1$ dimensions, observables become expectations under a distribution over paths. The trace becomes an expectation.
 :::
 ::::
 
-## Same problem, different dialects {data-edge="stats-physics"}
+## Exchange of ideas is valuable  {data-edge="stats-physics"}
 
 :::: {.columns}
 ::: {.column width="55%"}
-Parallel names across fields:
+Parallel ideas across fields:
 
 | Chemistry / CM | Statistics |
 |----------------|------------|
-| DMC | SMC |
-| VMC | variational inference |
-| MD / HMC | HMC |
+| Diffusion Monte Carlo | Sequential Monte Carlo |
+| Variational principle | Variational inference |
+| Hybrid Monte Carlo | Hamiltonian Monte Carlo |
 
 Occasionally ideas **cross**:
 
@@ -115,40 +119,143 @@ Occasionally ideas **cross**:
 :::
 ::: {.column width="45%"}
 ::: {.muted}
-Dual language is a feature: techniques can travel both ways.
+Innovations can travel in both directions.
 :::
+:::
+::::
+
+## Hamiltonian Monte Carlo {data-edge="stats-physics"}
+
+:::: {.columns}
+::: {.column width="50%"}
+Target density (known up to $Z$):
+
+$$
+\pi(q) = \frac{1}{Z}\,e^{-U(q)}
+$$
+
+Hamiltonian on extended space $(q,p)$:
+
+$$
+H(q,p) = U(q) + \tfrac{1}{2}\,p^\top M^{-1}p
+$$
+
+Canonical joint and marginal:
+
+$$
+\begin{aligned}
+p_{\mathrm{HMC}}(q,p)
+&\mathrel{\style{font-size:1.35em}{∝}} e^{-H(q,p)} \\
+\int p_{\mathrm{HMC}}(q,p)\,dp
+&= \pi(q)
+\end{aligned}
+$$
+:::
+::: {.column width="50%"}
+Hamilton's equations:
+
+$$
+\begin{aligned}
+\dot q &= \nabla_p H = M^{-1}p \\
+\dot p &= -\nabla_q H = -\nabla U(q)
+\end{aligned}
+$$
+
+Numerical integration with step size $\varepsilon$:
+
+$$
+\begin{aligned}
+p &\leftarrow p - \tfrac{\varepsilon}{2}\nabla U(q) \\
+q &\leftarrow q + \varepsilon\, M^{-1}p \\
+p &\leftarrow p - \tfrac{\varepsilon}{2}\nabla U(q)
+\end{aligned}
+$$
 :::
 ::::
 
 ## HMC dynamics {data-edge="stats-physics"}
 
-Leapfrog on a Gaussian target: phase-space trajectory and energy.
+Leapfrog on a Gaussian target
+$\displaystyle
+\pi(q)\mathrel{\style{font-size:1.35em}{∝}} e^{-q^{2}/2},
+\qquad
+H(q,p)=\tfrac{1}{2}q^{2}+\tfrac{1}{2}p^{2}
+$:
+phase-space trajectory and energy.
 
 ![](media/hmc/hmc_trajectory.gif){fig-alt="Discretized HMC trajectory with energy conservation" width="100%"}
 
 [Left: $(q,p)$ on energy contours. Right: $H(q,p)$ vs step — nearly conserved.]{.muted}
 
-## Measure preservation {data-edge="stats-physics"}
+## Idea 1: target microcanonical distribution {data-edge="stats-physics"}
 
 :::: {.columns}
 ::: {.column width="50%"}
-![](media/hmc/hmc_measure_preservation.gif){fig-alt="Measure preservation with and without momentum refresh"}
+Same target:
 
-[Volume preservation of the flow (with / without momentum refresh).]{.muted}
+$$
+\pi(x) = \frac{1}{Z}\,e^{-L(x)}
+$$
+
+Log-kinetic Hamiltonian
+(Steeg–Galstyan / MCLMC):
+
+$$
+H(x,\Pi)
+=
+L(x)
++
+(d-1)\log\|\Pi\|
+$$
+
+Microcanonical joint and marginal
+($u=\Pi/\|\Pi\|$):
+
+$$
+\begin{aligned}
+p_{\mathrm{MCLMC}}(x,u)
+&\mathrel{\style{font-size:1.35em}{∝}}
+e^{-L(x)}\,\delta(\|u\|-1) \\
+\int p_{\mathrm{MCLMC}}(x,u)\,du
+&= \pi(x)
+\end{aligned}
+$$
 :::
 ::: {.column width="50%"}
-![](media/hmc/hmc_momentum_refresh.gif){fig-alt="Momentum refresh mixing in phase space"}
+Isokinetic dynamics
+($\lvert u\rvert{=}1$ preserved):
 
-[Momentum refresh mixes across energy shells.]{.muted}
+$$
+\begin{aligned}
+\dot x &= u \\
+\dot u &=
+-\frac{\bigl(I-uu^\top\bigr)\nabla L(x)}{d-1}
+\end{aligned}
+$$
+
+Exact velocity update $B_\varepsilon$
+($\delta=\varepsilon\|\nabla L\|/(d{-}1)$,\
+$e=-\nabla L/\|\nabla L\|$):
+
+$$
+\begin{aligned}
+x &\leftarrow x + \varepsilon\,u \\[0.35em]
+u &\leftarrow
+\frac{
+u+(\sinh\delta+(e\cdot u)(\cosh\delta-1))\,e
+}{
+\cosh\delta+(e\cdot u)\sinh\delta
+}
+\end{aligned}
+$$
 :::
 ::::
 
-## Accelerating HMC {data-edge="stats-physics"}
+[Robnik, Cohn-Gordon, Seljak, NeurIPS 2025.]{.muted}
 
-Two insights from our group (Seljak lab):
+## Idea 2: Avoid Metropolis-Hastings {data-edge="stats-physics"}
 
-1. **Different dynamics** — target the **microcanonical** ensemble (equal weight on an energy shell), with a kinetic energy chosen so the position marginal is still the target.
-2. **No Metropolis adjustment** — skip MH; control asymptotic bias by tuning step size (EEVPD), trading a little bias for much lower variance in high dimension.
+Skip the Metropolis–Hastings correction. Discretization bias is **controlled** by tuning step size to target energy error variance, trading a little bias for much lower variance in high dimension.
 
 :::: {.columns}
 ::: {.column width="50%"}
@@ -159,45 +266,99 @@ Two insights from our group (Seljak lab):
 ::: {.column width="50%"}
 ![](media/hmc/bias-variance-diagram.png){fig-alt="Bias–variance tradeoff for unadjusted HMC"}
 
-[Bias–variance: controlled bias, larger ESS.]{.muted}
+[Trade-off: gain bias but lose variance.]{.muted}
 :::
 ::::
 
+[Robnik, Cohn-Gordon, Seljak, ICML 2026.]{.muted}
+
 ## Back to physics: a spin–fermion model {data-edge="stats-physics"}
 
-Collaboration with **Peter Lunts** (formerly CCQ).
+Collaboration with **Peter Lunts** (formerly CCQ). Lattice **spin–fermion** model of electronic structure:
 
-Apply unadjusted / microcanonical HMC to a lattice **spin–fermion** model of electronic structure.
+::: {.eq-compact}
+$$
+p_{\mathrm{SF}}(\phi,\psi)
+\mathrel{\style{font-size:1.35em}{∝}}
+e^{-(S_b(\phi)+S_{\mathrm{pf}}(\phi,\psi))}
+\qquad
+S_{\mathrm{pf}}
+=
+\psi^{*} A(\phi)^{-1}\psi
+$$
 
-Why this problem is a good stress test — two variance sources:
+$$
+\begin{aligned}
+S_b(\phi)
+&=
+\sum_{\tau=1}^{N_\tau}
+\sum_{i,j=1}^{L}
+\Delta\tau
+\Bigg[
+\sum_{a=1}^{N_b}
+\frac{1}{2c^{2}}|\partial_\tau\phi_{ij\tau a}|^{2}
++
+\sum_{a=1}^{N_b}
+\frac{1}{2}|\vec{\nabla}\phi_{ij\tau a}|^{2}
+\\[-0.15em]
+&\qquad
++
+\sum_{a=1}^{N_b}
+\frac{\lambda}{2}|\phi_{ij\tau a}|^{2}
++
+\frac{u}{4}
+\Big(\sum_{a=1}^{N_b}|\phi_{ij\tau a}|^{2}\Big)^{2}
+\Bigg]
+\end{aligned}
+$$
+:::
 
-1. **Disorder** — quenched randomness in AFM exchanges; expectations require averaging over disorder realizations.
-2. **Hutchinson trace trick** — fermionic observables estimated by stochastic traces; each sample carries Monte Carlo noise in the gradient / observable.
+$A(\phi)=D(\phi)D(\phi)^{\dagger}$; sample by alternating exact $\psi$ updates with MCMC on $\phi$.
+
+## Two variance sources {data-edge="stats-physics"}
 
 :::: {.columns}
-::: {.column width="55%"}
-Schematic action:
+::: {.column width="50%"}
+**Disorder** (site-dependent coupling $\mathbf{g}$)
+
+Clean: $g_{ij}=\mathrm{const}$.\
+Disordered: $g_{ij}\sim\mathrm{N}(g',{g''}^{2})$.
 
 $$
-S[\psi,\bar\psi,n]
+p_{\mathrm{SF}}(\phi,\psi,\mathbf{g})
 =
-S_{\mathrm{F}}[\psi,\bar\psi]
-+
-S_{\mathrm{b}}[n]
-+
-g\, n\cdot \bar\psi\,\sigma\,\psi
+p_D(\mathbf{g})\,
+p_{\mathrm{SF}}(\phi,\psi\mid\mathbf{g})
 $$
+
+Want $\mathbb{E}_{\mathbf{g}}[\mathbb{E}[f(\phi)\mid\mathbf{g}]]$ — average over disorder draws.
 :::
-::: {.column width="45%"}
-::: {.muted}
-Unadjusted microcanonical HMC is attractive when gradients are noisy and dimension is large.
-:::
+::: {.column width="50%"}
+**Fermionic occupation** $n$ via Green’s function
+
+$$
+G(\phi)
+=
+(\mathrm{TF})^{\dagger}\,
+D(\phi)^{-1}\,
+(\mathrm{TF})
+$$
+
+Hutchinson (Rademacher $v$):
+
+$$
+\mathrm{diag}(G)
+=
+\mathbb{E}_{v}\bigl[v\odot(Gv)\bigr]
+$$
+
+Stochastic traces $\Rightarrow$ extra MC noise in $n(\mathbf{k})$.
 :::
 ::::
 
 ## Results: fermionic observables {data-edge="stats-physics"}
 
-From *Fast Accurate Quantum Monte Carlo without Metropolis Adjustment*:
+From *Cohn-Gordon, Pescia, Robnik, Hearth, Seljak, Lunts (Neurips 2026)*:
 
 ![](media/hmc/results/panel_longrun.png){fig-alt="Fermion occupation, efficiency ratio, and bias diagnostics" width="100%"}
 
@@ -216,6 +377,90 @@ From *Fast Accurate Quantum Monte Carlo without Metropolis Adjustment*:
 :::
 ::::
 
+## Finite-size scaling {.scaling-eq-slot data-edge="stats-physics"}
+
+::: {.eq-hero .eq-scaling}
+$$
+m_i
+\sim
+L_i^{-\beta/\nu}\,
+f\!\Big(
+\tfrac{T_i-T_c}{T_c}\,
+L_i^{1/\nu}
+\Big)
+$$
+:::
+
+::: {.eq-below}
+Universal scaling for the magnetization (e.g.\ 2D Ising):
+one equation relating lattice size $L_i$, temperature $T_i$, and critical exponents.
+:::
+
+## Observed by simulation {.scaling-eq-slot data-edge="stats-physics"}
+
+::: {.eq-hero .eq-scaling}
+$$
+\underbrace{\color{#3d6aad}{m_i}}_{\displaystyle \color{#3d6aad}{\text{observed}}}
+=
+L_i^{-\beta/\nu}\,
+f\!\Big(
+\tfrac{T_i-T_c}{T_c}\,
+L_i^{1/\nu}
+\Big)
++
+\varepsilon_i,
+\qquad
+\varepsilon_i\sim\mathrm{N}(0,\sigma_i^{2})
+$$
+:::
+
+::: {.eq-below}
+Each $m_i$ comes from an MCMC simulation at design $(L_i,T_i)$; the standard error $\sigma_i$ is known from the run.
+:::
+
+## Bayesian Scaling Analysis {.scaling-eq-slot data-edge="stats-physics"}
+
+::: {.eq-hero .eq-scaling}
+$$
+{\color{#3d6aad}{m_i}}
+=
+L_i^{-\color{#2a9a93}{\beta}/\color{#2a9a93}{\nu}}\,
+\color{#2a9a93}{f}\!\Big(
+\tfrac{T_i-\color{#2a9a93}{T_c}}{\color{#2a9a93}{T_c}}\,
+L_i^{1/\color{#2a9a93}{\nu}}
+\Big)
++
+\varepsilon_i,
+\qquad
+\varepsilon_i\sim\mathrm{N}(0,\sigma_i^{2})
+$$
+:::
+
+::: {.eq-below}
+Unknown function $f$ gets a **Gaussian process** prior:
+
+$$
+f\sim\mathrm{GP}(0,\,k),
+\qquad
+k(z,z')
+=
+\eta_f^{2}
+\exp\!\Big(-\tfrac{(z-z')^{2}}{2\ell_f^{2}}\Big)
+$$
+
+::: {.design-legend}
+<span><span class="swatch unk"></span>unknown $\theta=(T_c,\nu,\beta,f)$</span>\
+<span><span class="swatch obs"></span>data $y=\{m_i\}$</span>\
+<span><span class="swatch known"></span>known $(L_i,T_i)$, noise $\sigma_i$</span>
+:::
+:::
+
+## Bayesian Scaling Analysis {.media-hero data-edge="stats-physics"}
+
+![](media/bsa/evolution_stepper.gif){fig-alt="Active learning loop: Tc-nu posterior, Binder grid, and GP fit over iterations" .r-stretch}
+
+[Active learning on $m, m^2, m^4$: posterior, design points, and GP fit.]{.muted}
+
 ## [Statistics]{.strand-s} + [Functional Programming]{.strand-f} {data-edge="stats-fp"}
 
 ::: {.center-block}
@@ -225,13 +470,14 @@ From *Fast Accurate Quantum Monte Carlo without Metropolis Adjustment*:
 
 ## The naïve workflow {data-edge="stats-fp"}
 
-A natural way to do statistical programming:
+The old way of doing computational statistics:
 
 1. Derive the model on a whiteboard (the Markov kernels you want: prior, likelihood, filter, …)
 2. Hand-write a program that implements those kernels
 
-Laborious — and risky:
+The downsides:
 
+- Hard to read: model and inference tangled together in the code
 - No guarantee of a **link** between the mathematical model and the running program
 - Every change to the model reopens the derivation
 
@@ -239,97 +485,124 @@ Laborious — and risky:
 
 **Idea:** specify the *model* as code; automate the derivation of the inference method.
 
-:::: {.columns}
-::: {.column width="45%"}
-whiteboard → program
+**Stan** is an example: write a generative model; get HMC for free.
 
-[hand-derived kernels]{.muted}
-:::
-::: {.column width="10%"}
-::: {.center-block}
-⇒
-:::
-:::
-::: {.column width="45%"}
-model-as-code → inference
-
-[compiler / library derives the sampler]{.muted}
-:::
-::::
-
-**Stan** is the canonical example: write a generative model; get HMC for free.
-
-## Warm-up: static particle detection {data-edge="stats-fp"}
+## Simple example of probabilistic program {data-edge="stats-fp"}
 
 A particle at unknown position $x$; one noisy observation $y$.
 
 :::: {.columns}
 ::: {.column width="55%"}
 ```haskell
--- monad-bayes style
-detect :: MonadInfer m => Double -> m Double
-detect y = do
-  x <- normal 0 1              -- prior
-  score (normalPdf x 0.5 y)    -- likelihood
-  return x                     -- posterior sample
+
+prior :: Distribution m => m Float
+prior = normal 0 1
+
+likelihood :: Distribution m => Float -> Float -> Float
+likelihood x y = normalPdf x 0.5 y
+
+posterior :: Measure m => Float -> m Float
+posterior y = do
+  x <- prior               
+  condition (likelihood x y)     
+  return x                   
 ```
 :::
 ::: {.column width="45%"}
 $$
 \begin{aligned}
-x &\sim \mathrm{N}(0,1) \\
-y \mid x &\sim \mathrm{N}(x, 0.5^2)
+\texttt{prior}&:\quad
+x \sim \mathrm{N}(0,1) \\[0.35em]
+\texttt{likelihood}&:\quad
+p(y\mid x)=\mathrm{N}(y;\,x,0.5^2) \\[0.35em]
+\texttt{posterior}&:\quad
+p(x\mid y)\mathrel{\style{font-size:1.35em}{∝}} p(x)\,p(y\mid x)
 \end{aligned}
 $$
 
-[Model = generative story + conditioning.]{.muted}
+[`condition` conditions on $y$ — unnormalized until inference.]{.muted}
 :::
 ::::
 
-## Many inference methods {data-edge="stats-fp"}
-
-Same model; many ways to draw from $p(x\mid y)$:
-
-:::: {.columns}
-::: {.column width="50%"}
-- Exact conjugate update
-- Importance sampling / SMC
-- Metropolis–Hastings
-- **HMC** (Stan’s default)
-- Variational inference
-:::
-::: {.column width="50%"}
-The PPL’s job: **choose / derive** an inference method from the model code.
-
-[Stan ≈ HMC for static models.]{.muted}
-
-[What about models that unfold in **time**?]{.muted}
-:::
-::::
-
-## A PPL for stochastic processes {data-edge="stats-fp"}
+## Dynamical systems {data-edge="stats-fp"}
 
 Stan targets **static** models (batch data, fixed dimension).
 
-I've been building a probabilistic programming language for **stochastic processes**: models that unfold in time, with streaming observations and online inference.
+Many problems unfold online: a latent state moves; noisy observations arrive as a stream; we want beliefs that update in real time.
 
-Built in Haskell by fusing
+## Noisy observations {data-edge="stats-fp"}
 
-- **functional reactive programming** — signal functions over time
-- **probabilistic programming** — sampling, conditioning, SMC
+::: {.frp-demo-slot data-frp-stage="obs"}
+:::
 
-## Demo: prior dynamics {data-edge="stats-fp"}
+## The conceptual picture (Feynman–Kac) {data-edge="stats-fp"}
+
+::: {.concept-rows}
+:::: {.concept-row}
+::: {.concept-desc}
+**prior:** a distribution over trajectories (a stochastic process)
+:::
+::: {.concept-type}
+`Distribution(Time → Position)`
+:::
+::::
+
+:::: {.concept-row}
+::: {.concept-desc}
+**likelihood:** distribution over observation trajectories as a (causal) function of the true trajectory
+:::
+::: {.concept-type}
+`(Time → Position) → Distribution(Time → Obs)`
+:::
+::::
+
+:::: {.concept-row}
+::: {.concept-desc}
+**posterior:** true trajectory as a function of the observation trajectory
+:::
+::: {.concept-type}
+`(Time → Obs) → Distribution(Time → Position)`
+:::
+::::
+
+:::: {.concept-row}
+::: {.concept-desc}
+**particle filter:** transforms the posterior into a distribution over a population of particles
+:::
+::: {.concept-type}
+`Time → Distribution(List(Position))`
+:::
+::::
+:::
+
+## Particle filter {data-edge="stats-fp"}
+
+::: {.frp-demo-slot data-frp-stage="particles"}
+:::
+
+## What a particle filter approximates {data-edge="stats-fp"}
+
+$$\mathbb{Q}
+\;\approx\;
+\sum_{i=1}^{N}
+W^{(i)}\,\delta_{X^{(i)}}
+$$
+
+- draw paths from the prior dynamics $\mathbb{P}$
+- accumulate weights $w(X^{(i)})$ from the observations
+- resample $\Rightarrow$ a **normalized** cloud of trajectories
+
+[The blue swarm is this cloud at the current time.]{.muted}
+
+## Code faithful to the maths {data-edge="stats-fp"}
+
+Now: write the model so the types match that story —
+and let the library derive the particle filter.
+
+## Prior as a process {data-edge="stats-fp"}
 
 :::: {.columns}
-::: {.column width="46%"}
-::: {.frp-demo-slot data-frp-stage="prior"}
-:::
-
-::: {.frp-demo-caption}
-Teal = latent position (prior only)
-:::
-:::
-::: {.column width="54%"}
+::: {.column width="52%"}
 ```haskell
 prior :: () >--> Position
 prior = proc _ -> do
@@ -337,50 +610,20 @@ prior = proc _ -> do
   y <- stochasticOscillator 0 0 -< 1
   returnA -< V2 x y
 ```
+:::
+::: {.column width="48%"}
+`() >-> Position`: a signal with no input.
 
-[A noisy harmonic oscillator — a stochastic process.]{.muted}
+Running it **samples paths** from $\mathbb{P}$.
+
+[Decoupled from the clock / timestep / runner.]{.muted}
 :::
 ::::
 
-## Demo: observation model {data-edge="stats-fp"}
+## Conditioning = reweighting {data-edge="stats-fp"}
 
 :::: {.columns}
-::: {.column width="46%"}
-::: {.frp-demo-slot data-frp-stage="obs"}
-:::
-
-::: {.frp-demo-caption}
-Coral = noisy observations
-:::
-:::
-::: {.column width="54%"}
-```haskell
-observationModel ::
-  Position >--> Observation
-observationModel = proc p -> do
-  nx <- noise -< ()
-  ny <- noise -< ()
-  returnA -< p + V2 nx ny
-  where
-    noise = constM (normal 0 std)
-```
-:::
-::::
-
-## Demo: the inference problem {data-edge="stats-fp"}
-
-:::: {.columns}
-::: {.column width="46%"}
-::: {.frp-demo-slot data-frp-stage="hidden"}
-:::
-
-::: {.frp-demo-caption}
-Latent hidden — only observations remain
-:::
-
-Infer $p(\mathrm{position}_t \mid \mathrm{obs}_{\le t})$.
-:::
-::: {.column width="54%"}
+::: {.column width="52%"}
 ```haskell
 posterior ::
   Observation >-/-> Position
@@ -390,23 +633,20 @@ posterior = proc obs -> do
     likelihood obs latent
   returnA -< latent
 ```
+:::
+::: {.column width="48%"}
+`observe` multiplies by $g(Y_t\mid X_t)$.
 
-[Unnormalized: model + conditioning, not yet a sampler.]{.muted}
+`>-/->` = unnormalized path measure
+$\propto w\,\mathbb{P}$ —
+$\mathbb{Q}$ before dividing by $Z$.
 :::
 ::::
 
-## Demo: automated inference {data-edge="stats-fp"}
+## Particle filter from the unnormalized measure {data-edge="stats-fp"}
 
 :::: {.columns}
-::: {.column width="46%"}
-::: {.frp-demo-slot data-frp-stage="particles"}
-:::
-
-::: {.frp-demo-caption}
-Indigo = posterior particles from SMC
-:::
-:::
-::: {.column width="54%"}
+::: {.column width="48%"}
 ```haskell
 inference ::
   Observation >--> [(Position, Weight)]
@@ -415,7 +655,11 @@ inference =
     posterior
 ```
 
-[Same model code; SMC is derived by the library — analogous to Stan automating HMC.]{.muted}
+[Same model; SMC derived by the library — like Stan automating HMC.]{.muted}
+:::
+::: {.column width="52%"}
+::: {.frp-demo-slot data-frp-stage="particles"}
+:::
 :::
 ::::
 
@@ -426,27 +670,28 @@ inference =
 :::
 :::
 
-## An unknown unknown {data-edge="fp-physics"}
+## Ideas from programming language research {data-edge="fp-physics"}
 
-Programming language theory — $\lambda$-calculus, dependent types, the Curry–Howard isomorphism — is largely an **unknown unknown** for physicists.
+Programming language theory — $\lambda$-calculus, dependent types, the Curry–Howard isomorphism — rarely intersects with computational physics.
 
 Historically understandable:
 
-- Computational problems were bottlenecked by **speed**
-- Low-level control of hardware was the scarce resource
-- So the culture optimized for Fortran / C / CUDA, not for expressive specification
+- Computational problems are bottlenecked by **speed**
+- Low-level control of hardware is important
 
 ## A new bottleneck: code complexity {data-edge="fp-physics"}
 
 Performance still matters — but **complexity** is increasingly the limiter.
 
-What we want is **compositionality**: glue correct pieces into larger correct pieces.
+What we want is **compositionality**: 
 
-**Example:** tensor-network algorithms.
+- glue correct pieces into larger correct pieces.
+- new algorithms for free
 
-- Often written for a fixed lattice / geometry
-- Generalizing over **graph topology** (trees, grids, arbitrary graphs) means the same contraction / update idea must be stated abstractly
-- Without that abstraction, every geometry is a rewrite
+**Example:** tensor-network algorithms that generalize over graph topology
+
+- you get new lattices for free
+- algorithm is often simpler.
 
 ## Separate specification from implementation {data-edge="fp-physics"}
 
@@ -470,9 +715,8 @@ What we want is **compositionality**: glue correct pieces into larger correct pi
 :::
 ::::
 
-Derive on a whiteboard, then distill into code that **combines** the model and the inference method.
 
-**PPLs:** tease the two apart — specify the model; automate / choose the inference (Stan, …).
+**PPLs:** tease apart model specification and inference — specify the model; automate / choose the inference (e.g. Stan).
 
 **Physics:** the same two parts are still disjoint — mathematical description (e.g. linear maps) vs. implementation (arrays)
 
@@ -484,13 +728,25 @@ Derive on a whiteboard, then distill into code that **combines** the model and t
 >
 > — Terence Tao (on Lean formalization)
 
-## Same idea in physics {data-edge="fp-physics"}
+## Type driven development in physics {data-edge="fp-physics"}
 
-Change the type a Krylov solver is allowed to act on — the checker shows what else must break.
+Schematic Krylov solver — change what it acts on:
 
-- Refactors become local and guided
-- Not “find every array of the wrong shape by hand”
-- Types as a live interface between maths and code
+```lean
+-- 1. concrete: dense matrix
+krylov : Matrix → Vec → Vec
+
+-- 2. switch realization
+krylov : SparseMatrix → Vec → Vec
+--   checker underlines call sites that
+--   assumed dense layout / indexing
+
+-- 3. polymorphic, with a constraint
+krylov : {A : Type} → [HasMatVec A]
+      → A → Vec → Vec
+```
+
+[`HasMatVec`: only need $v\mapsto Av$ — dense, sparse, or a black-box linear map.]{.muted}
 
 ## Linear algebra, two views {data-edge="fp-physics"}
 
@@ -512,30 +768,59 @@ Change the type a Krylov solver is allowed to act on — the checker shows what 
 
 Specifying the math first makes it natural to **swap realizations** without rewriting the algorithm.
 
-## Case study: $SU(2)$ representations {data-edge="fp-physics"}
+## Case study: representations {data-edge="fp-physics"}
 
-A representation is a vector space with a group action.
-Irreps are the indecomposable pieces; a general rep is their sum.
+Fix a group $G$ (e.g. $SU(2)$).
+
+**Irreps:** the indecomposable building blocks — labels $a,b,\ldots$ (for $SU(2)$: spins $0,\tfrac12,1,\tfrac32,\ldots$).
+
+Every finite-dimensional representation decomposes as
+
+$$
+V \;\cong\; \bigoplus_{a} \; m_a \, V_a
+$$
+
+a direct sum of irreps, each with a multiplicity $m_a$.
+
+## Carrier space of an irrep {data-edge="fp-physics"}
+
+To each irrep label $a$ associate a vector space $V_a$:
 
 ```lean
--- Lean / mathlib sketch
-structure Representation (G V) where
-  ρ : G → (V →ₗ[ℂ] V)
-  map_one : ρ 1 = id
-  map_mul : ρ (g * h) = ρ g ∘ₗ ρ h
+-- Lean sketch
+variable (G : Type) [Group G]
+variable (Irrep : Type → Type)              -- labels for G
+variable (V : (G : Type) → Irrep G → Type)  -- carriers
 
--- V ≅ ⊕ⱼ  (irrep ⱼ) ⊗ (multiplicity)
--- the group acts on each irrep
+-- e.g. V SU2 (1/2) ≃ ℂ²,  V SU2 1 ≃ ℂ³, …
 ```
 
-## Symmetric tensors = intertwiners {data-edge="fp-physics"}
+- $V_{1/2} \cong \mathbb{C}^2$, $V_1 \cong \mathbb{C}^3$, $V_j \cong \mathbb{C}^{2j+1}$
+- Tensor products of carriers fuse back into irreps: $\tfrac12\otimes\tfrac12 \cong 0\oplus 1$
 
-A symmetry-respecting map $A\to B$ is a linear map that **commutes with the action**:
+## Group elements act as operators {data-edge="fp-physics"}
+
+A group element $g\in G$ maps to a linear operator on each irrep's carrier:
 
 ```lean
-def Intertwiner (ρA ρB) :=
-  { f : A →ₗ[ℂ] B //
-      ∀ g, f ∘ₗ ρA g = ρB g ∘ₗ f }
+-- ρ : (G : Type) → (g : G) → (a : Irrep G) → (V G a →ₗ[ℂ] V G a)
+def ρ (G) [Group G] (a : Irrep G) (g : G) : V G a →ₗ[ℂ] V G a
+
+-- homomorphism laws:
+--   ρ G a 1 = id
+--   ρ G a (g * h) = ρ G a g ∘ₗ ρ G a h
+```
+
+[Same abstract type for every irrep — only the concrete matrix for $V_a$ changes with $a$.]{.muted}
+
+## Intertwiners = trivial sector {data-edge="fp-physics"}
+
+A **symmetric** (equivariant) map $A\to B$ is a linear map that *commutes with the action*:
+
+```lean
+def Intertwiner (G) [Group G] (a b : Irrep G) :=
+  { f : V G a →ₗ[ℂ] V G b //
+      ∀ g, f ∘ₗ ρ G a g = ρ G b g ∘ₗ f }
 ```
 
 Hom-space dictionary:
@@ -545,10 +830,10 @@ $$
 \;\cong\;
 A^{*}\otimes B
 \;\cong\;
-\bigoplus_{j} m_{j}\,(\text{irrep }j)
+\bigoplus_{j} m_{j}\, V_j
 $$
 
-The maps that commute with $G$ are exactly the **trivial sector** ($j{=}0$).
+The maps that commute with $G$ are exactly the **trivial sector** ($j{=}0$) — only that block need be kept.
 
 ## What the maths buys you {data-edge="fp-physics"}
 
@@ -567,3 +852,32 @@ Once $\mathrm{Hom}_G(A,B)$ is the trivial sector of $A^{*}\otimes B$:
 ## Fit with CCQ {data-edge="all"}
 
 [TODO: collaborations, software culture, future directions]{.todo}
+
+## Thanks {data-edge="all"}
+
+::: {.thanks-grid}
+::: {.thanks-person}
+![](media/thanks/peter-lunts.jpg){fig-alt="Peter Lunts"}
+[Peter Lunts]{.name}
+:::
+::: {.thanks-person}
+![](media/thanks/jakob-robnik.jpg){fig-alt="Jakob Robnik"}
+[Jakob Robnik]{.name}
+:::
+::: {.thanks-person}
+![](media/thanks/uros-seljak.jpg){fig-alt="Uroš Seljak"}
+[Uroš Seljak]{.name}
+:::
+::: {.thanks-person}
+![](media/thanks/dries-sels.jpg){fig-alt="Dries Sels"}
+[Dries Sels]{.name}
+:::
+::: {.thanks-person}
+![](media/thanks/gabriel-pescia.jpg){fig-alt="Gabriel Pescia"}
+[Gabriel Pescia]{.name}
+:::
+::: {.thanks-person}
+![](media/thanks/michael-lindsey.jpg){fig-alt="Michael Lindsey"}
+[Michael Lindsey]{.name}
+:::
+:::

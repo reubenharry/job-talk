@@ -6,12 +6,9 @@
   --edge-hi: #1c1b19;
   --accent: #2c4a6e;
   --dot: #1c1b19;
-  --strand-s: #1f6f6a;
-  --strand-f: #9a5b24;
-  --strand-p: #2f4d7a;
-  --edge-stats-fp: #5f6540;
-  --edge-stats-physics: #275f72;
-  --edge-fp-physics: #6a4f4a;
+  --strand-s: #2a9a93;
+  --strand-f: #c4782e;
+  --strand-p: #3d6aad;
 }
 
 .reveal-viewport {
@@ -32,6 +29,10 @@
   text-transform: none;
   letter-spacing: -0.01em;
   color: var(--fg);
+}
+
+.reveal .slides section > h2 {
+  margin-bottom: 1.15em;
 }
 
 .reveal .subtitle,
@@ -58,6 +59,92 @@
 .reveal .muted {
   color: var(--muted);
   font-size: 0.75em;
+}
+
+.reveal .eq-compact {
+  font-size: 0.72em;
+}
+
+.reveal .eq-compact .MathJax,
+.reveal .eq-compact mjx-container {
+  font-size: 0.95em !important;
+}
+
+.reveal .eq-compact p {
+  margin: 0.35em 0;
+}
+
+/* BSA: annotate unknowns vs data in MathJax */
+.reveal .unk,
+.reveal mjx-mstyle[style*="--unk"],
+.reveal .MathJax .unk {
+  color: var(--strand-s) !important;
+}
+
+.reveal .obs,
+.reveal .MathJax .obs {
+  color: var(--strand-p) !important;
+}
+
+.reveal .design-legend {
+  display: flex;
+  gap: 1.6em;
+  justify-content: center;
+  margin-top: 1.1em;
+  font-size: 0.78em;
+  font-family: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+.reveal .design-legend .swatch {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  border-radius: 2px;
+  margin-right: 0.4em;
+  vertical-align: -0.05em;
+}
+
+.reveal .design-legend .swatch.unk {
+  background: var(--strand-s);
+}
+
+.reveal .design-legend .swatch.obs {
+  background: var(--strand-p);
+}
+
+.reveal .design-legend .swatch.known {
+  background: var(--muted);
+}
+
+.reveal .eq-hero {
+  text-align: center;
+  margin: 0.6em 0 0.2em;
+}
+
+.reveal .eq-hero .MathJax,
+.reveal .eq-hero mjx-container {
+  font-size: 1.05em !important;
+}
+
+/* Shared layout for Finite-size → Observed → Bayes (keep eq in place) */
+.reveal .slides section.scaling-eq-slot > h2 {
+  margin-bottom: 0.55em;
+}
+
+.reveal .slides section.scaling-eq-slot .eq-scaling {
+  box-sizing: border-box;
+  min-height: 5.6em;
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: center;
+}
+
+.reveal .slides section.scaling-eq-slot .eq-below {
+  margin-top: 0.7em;
+  text-align: center;
+  font-size: 0.92em;
 }
 
 .reveal .edge-pair {
@@ -103,6 +190,10 @@
   overflow: visible;
 }
 
+.research-triangle.triangle-lg .triangle {
+  width: min(560px, 88vw);
+}
+
 .triangle .edge {
   stroke: var(--edge-dim);
   stroke-width: 2.5;
@@ -111,35 +202,13 @@
 }
 
 .triangle .edge.is-active {
+  stroke: var(--edge-hi);
   stroke-width: 5.5;
 }
 
-.triangle .edge[data-edge="stats-fp"].is-active {
-  stroke: var(--edge-stats-fp);
-}
-
-.triangle .edge[data-edge="stats-physics"].is-active {
-  stroke: var(--edge-stats-physics);
-}
-
-.triangle .edge[data-edge="fp-physics"].is-active {
-  stroke: var(--edge-fp-physics);
-}
-
 .triangle[data-triangle="all"] .edge.is-active {
+  stroke: var(--edge-hi);
   stroke-width: 3.25;
-}
-
-.triangle[data-triangle="all"] .edge[data-edge="stats-fp"].is-active {
-  stroke: var(--edge-stats-fp);
-}
-
-.triangle[data-triangle="all"] .edge[data-edge="stats-physics"].is-active {
-  stroke: var(--edge-stats-physics);
-}
-
-.triangle[data-triangle="all"] .edge[data-edge="fp-physics"].is-active {
-  stroke: var(--edge-fp-physics);
 }
 
 .triangle .vtx-dot {
@@ -187,19 +256,8 @@
 }
 
 #corner-triangle .edge.is-active {
+  stroke: var(--edge-hi);
   stroke-width: 3.75;
-}
-
-#corner-triangle .edge[data-edge="stats-fp"].is-active {
-  stroke: var(--edge-stats-fp);
-}
-
-#corner-triangle .edge[data-edge="stats-physics"].is-active {
-  stroke: var(--edge-stats-physics);
-}
-
-#corner-triangle .edge[data-edge="fp-physics"].is-active {
-  stroke: var(--edge-fp-physics);
 }
 
 #corner-triangle .vtx-dot {
@@ -307,15 +365,71 @@ html[data-edge="off"] .reveal .progress span {
   font-size: 0.85em;
 }
 
+/* Conceptual picture: prose left, type signature right */
+.concept-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+  margin-top: 0.75rem;
+  max-width: 1000px;
+}
+
+.concept-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 1rem 1.5rem;
+  align-items: baseline;
+}
+
+.concept-row .concept-desc {
+  font-size: 0.78em;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.concept-row .concept-type {
+  margin: 0;
+  font-size: 0.72em;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+.concept-row .concept-type code {
+  color: var(--muted);
+  white-space: nowrap;
+  background: transparent;
+  padding: 0;
+  font-size: 1em;
+}
+
 /* Live FRP tracker: slot in the slide + fixed host iframe overlaid on it */
 .frp-demo-slot {
-  width: 100%;
+  /* Width-driven 4:3 box. Prefer aspect-ratio; padding hack as fallback so
+     flex/reveal layouts cannot squash the slot into a wide strip. */
+  width: min(100%, 720px);
+  max-width: 720px;
+  height: 0;
+  padding: 0 0 75%; /* 3/4 → 4:3 */
   aspect-ratio: 4 / 3;
-  max-height: 420px;
+  margin: 0.35rem auto 0;
   border: 1px solid #ddd8cf;
   border-radius: 6px;
   background: #fff;
   box-sizing: border-box;
+  overflow: hidden;
+  flex: none;
+}
+
+@supports (aspect-ratio: 4 / 3) {
+  .frp-demo-slot {
+    height: auto;
+    padding: 0;
+  }
+}
+
+.columns .frp-demo-slot {
+  width: 100%;
+  max-width: 480px;
 }
 
 .frp-demo-caption {
@@ -387,6 +501,21 @@ html[data-edge="off"] .reveal .progress span {
   max-height: 480px;
 }
 
+.reveal .slides section.media-hero > h2 {
+  margin-bottom: 0.35em;
+}
+
+.reveal .slides section.media-hero img,
+.reveal .slides section.media-hero img[src$=".gif"] {
+  max-height: min(78vh, 760px);
+  width: 100%;
+  object-fit: contain;
+}
+
+.reveal .slides section.media-hero .muted {
+  margin-top: 0.35em;
+}
+
 .reveal .columns p {
   font-size: 0.78em;
   line-height: 1.35;
@@ -395,4 +524,52 @@ html[data-edge="off"] .reveal .progress span {
 .reveal .slides section ul,
 .reveal .slides section ol {
   font-size: 0.85em;
+}
+
+/* Thanks slide */
+.thanks-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.1rem 1.4rem;
+  justify-items: center;
+  align-items: start;
+  max-width: 980px;
+  margin: 0.4rem auto 0;
+}
+
+.thanks-person {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  max-width: 180px;
+}
+
+.thanks-person > p {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.thanks-person img {
+  width: 148px;
+  height: 148px;
+  max-height: none;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 4px solid var(--edge-dim);
+  background: #fff;
+  box-shadow: none;
+}
+
+.thanks-person .name {
+  font-family: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 0.48em;
+  font-weight: 600;
+  color: var(--fg);
+  text-align: center;
+  line-height: 1.2;
 }

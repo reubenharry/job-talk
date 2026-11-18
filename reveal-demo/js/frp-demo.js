@@ -1,6 +1,7 @@
 (function () {
   const STAGES = new Set(["prior", "obs", "hidden", "particles"]);
   const EMBED_SRC = "media/frp/embed.html";
+  const AR = 4 / 3; // width / height
 
   let host = null;
   let iframe = null;
@@ -17,7 +18,7 @@
     iframe = document.createElement("iframe");
     iframe.title = "Stochastic process tracker demo";
     iframe.allow = "autoplay";
-    iframe.src = EMBED_SRC + "?stage=prior";
+    iframe.src = EMBED_SRC + "?stage=obs&v=live5";
     host.appendChild(iframe);
     document.body.appendChild(host);
 
@@ -42,7 +43,6 @@
       pendingStage = stage;
       return;
     }
-    // Restart clears latch, then hold the new stage button down.
     iframe.contentWindow.postMessage(
       { type: "frp-demo-restart", stage },
       "*"
@@ -55,6 +55,7 @@
     host.setAttribute("aria-hidden", "true");
   }
 
+  /** Fit a 4:3 box inside the slot — never nonuniform stretch. */
   function placeOver(slot) {
     ensureHost();
     const r = slot.getBoundingClientRect();
@@ -62,15 +63,24 @@
       hide();
       return;
     }
-    host.style.top = `${Math.round(r.top)}px`;
-    host.style.left = `${Math.round(r.left)}px`;
-    host.style.width = `${Math.round(r.width)}px`;
-    host.style.height = `${Math.round(r.height)}px`;
+    let w = r.width;
+    let h = w / AR;
+    if (h > r.height) {
+      h = r.height;
+      w = h * AR;
+    }
+    const left = r.left + (r.width - w) / 2;
+    const top = r.top + (r.height - h) / 2;
+    host.style.top = `${Math.round(top)}px`;
+    host.style.left = `${Math.round(left)}px`;
+    host.style.width = `${Math.round(w)}px`;
+    host.style.height = `${Math.round(h)}px`;
     host.classList.add("is-active");
     host.setAttribute("aria-hidden", "false");
   }
 
-  function sync(slide) {
+  function sync(slide, opts) {
+    const forceStage = !!(opts && opts.forceStage);
     const current =
       slide ||
       (typeof Reveal !== "undefined" ? Reveal.getCurrentSlide() : null);
@@ -81,7 +91,7 @@
     }
     const stage = slot.getAttribute("data-frp-stage") || "prior";
     placeOver(slot);
-    sendStage(stage, false);
+    sendStage(stage, forceStage);
   }
 
   function boot() {
@@ -89,8 +99,10 @@
     started = true;
     ensureHost();
     hide();
-    sync(Reveal.getCurrentSlide());
-    Reveal.on("slidechanged", (event) => sync(event.currentSlide));
+    sync(Reveal.getCurrentSlide(), { forceStage: true });
+    Reveal.on("slidechanged", (event) =>
+      sync(event.currentSlide, { forceStage: true })
+    );
     Reveal.on("resize", () => sync());
     window.addEventListener("resize", () => sync());
   }
