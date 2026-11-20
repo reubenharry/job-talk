@@ -74,6 +74,33 @@
   margin: 0.35em 0;
 }
 
+.reveal .slides section.compose-fit > h2 {
+  margin-bottom: 0.35em;
+}
+
+.reveal .slides section.compose-fit > p {
+  margin: 0.25em 0 0.55em;
+  font-size: 0.85em;
+}
+
+.reveal .slides section.compose-fit .eq-compact {
+  font-size: 0.78em;
+}
+
+.reveal .slides section.compose-fit .eq-compact .MathJax,
+.reveal .slides section.compose-fit .eq-compact mjx-container {
+  font-size: 0.9em !important;
+}
+
+.reveal .slides section.compose-fit pre {
+  font-size: 0.38em;
+  margin-top: 0.15em;
+}
+
+.reveal .slides section.compose-fit .muted {
+  margin-top: 0.45em;
+  font-size: 0.62em;
+}
 /* BSA: annotate unknowns vs data in MathJax */
 .reveal .unk,
 .reveal mjx-mstyle[style*="--unk"],
@@ -119,6 +146,55 @@
 .reveal .eq-hero {
   text-align: center;
   margin: 0.6em 0 0.2em;
+}
+
+/* CSS underbrace (avoids MathJax stretchy-brace bugs) */
+.reveal .eq-brace-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.35em;
+  margin: 0.85em 0 0.35em;
+  font-size: 1.05em;
+}
+
+.reveal .eq-brace-row > p {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+}
+
+.reveal .math-underbrace {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  line-height: 1.15;
+  color: var(--fg);
+}
+
+.reveal .math-underbrace > .MathJax,
+.reveal .math-underbrace > span.math {
+  display: inline-block;
+  padding: 0 0.15em;
+}
+
+.reveal .math-underbrace .ub-brace {
+  display: block;
+  align-self: stretch;
+  width: calc(100% + 0.3em);
+  height: 0.7em;
+  margin: 0.08em -0.15em 0;
+  overflow: visible;
+}
+
+.reveal .math-underbrace .ub-label {
+  margin-top: 0.12em;
+  font-size: 0.55em;
+  color: var(--muted);
+  font-family: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+  white-space: nowrap;
 }
 
 .reveal .eq-hero .MathJax,
@@ -177,6 +253,84 @@
   margin-top: 0.2rem;
 }
 
+/* Maths → code morph strip */
+.reveal .math-becomes-code {
+  --mbc-h: 200px;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: min(100%, 820px);
+  height: var(--mbc-h);
+  margin: 0.55em auto 0.85em;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(28, 27, 25, 0.06);
+}
+
+.reveal .math-becomes-code .mbc-panel {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.reveal .math-becomes-code .mbc-panel p {
+  margin: 0;
+  height: 100%;
+}
+
+.reveal .math-becomes-code img {
+  display: block;
+  width: 100%;
+  height: var(--mbc-h);
+  object-fit: cover;
+  margin: 0;
+}
+
+.reveal .math-becomes-code .mbc-math {
+  clip-path: polygon(0 0, 92% 0, 78% 100%, 0 100%);
+  z-index: 1;
+}
+
+.reveal .math-becomes-code .mbc-code {
+  margin-left: -18%;
+  clip-path: polygon(22% 0, 100% 0, 100% 100%, 8% 100%);
+  z-index: 2;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35em 0.55em 0.35em 12%;
+  box-sizing: border-box;
+}
+
+.reveal .math-becomes-code .mbc-code > div.sourceCode,
+.reveal .math-becomes-code .mbc-code pre {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  background: #000 !important;
+  box-shadow: none;
+  border: none;
+}
+
+.reveal .math-becomes-code .mbc-code pre {
+  font-size: 0.52em;
+  line-height: 1.32;
+  padding: 0;
+  color: #f2f0ec !important;
+}
+
+.reveal .math-becomes-code .mbc-code pre code,
+.reveal .math-becomes-code .mbc-code code span {
+  padding: 0;
+  background: transparent !important;
+  color: #f2f0ec !important;
+}
+
+.reveal .math-becomes-code .mbc-code .code-copy-button {
+  display: none;
+}
+
 .research-triangle {
   display: flex;
   justify-content: center;
@@ -209,6 +363,13 @@
 .triangle[data-triangle="all"] .edge.is-active {
   stroke: var(--edge-hi);
   stroke-width: 3.25;
+}
+
+/* Summary: bold edges incident to Physics */
+#summary .triangle .edge[data-edge="stats-physics"].is-active,
+#summary .triangle .edge[data-edge="fp-physics"].is-active {
+  stroke: var(--edge-hi);
+  stroke-width: 6.5;
 }
 
 .triangle .vtx-dot {
@@ -421,13 +582,22 @@ html[data-edge="off"] .reveal .progress span {
 }
 
 .reveal .slides section.frp-hero > h2 {
-  margin-bottom: 0.35em;
+  margin-bottom: 0.3em;
 }
 
 .reveal .slides section.frp-hero .frp-demo-slot {
-  width: min(100%, 980px);
-  max-width: 980px;
-  margin-top: 0.15rem;
+  width: min(100%, 780px);
+  max-width: 780px;
+  max-height: min(52vh, 500px);
+  margin-top: 0.1rem;
+}
+
+@supports (aspect-ratio: 4 / 3) {
+  .reveal .slides section.frp-hero .frp-demo-slot {
+    /* Keep 4:3, but cap by height so the slot fits under the title */
+    width: min(100%, 780px, calc(min(52vh, 500px) * 4 / 3));
+    max-width: min(780px, calc(min(52vh, 500px) * 4 / 3));
+  }
 }
 
 .reveal .slides section.code-lg pre {
@@ -436,10 +606,146 @@ html[data-edge="off"] .reveal .progress span {
   max-width: none;
 }
 
+/* Pandoc comment spans — softer grey so they read as annotations */
+.reveal code span.co {
+  color: #9a9a9a !important;
+  font-style: italic;
+}
+
 .reveal .slides section.code-lg .column pre {
   width: 100%;
 }
 
+.reveal .slides section.pf-messy > h2 {
+  margin-bottom: 0.7em;
+}
+
+.reveal .slides section.pf-messy .pf-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.1em;
+  width: 100%;
+}
+
+/* No panel — just the code, so short lines don't leave empty box sides */
+.reveal .slides section.pf-messy .pf-row > div.sourceCode,
+.reveal .slides section.pf-messy.code-lg .pf-row > pre {
+  flex: 0 0 auto;
+  width: max-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+.reveal .slides section.pf-messy.code-lg .pf-row > pre {
+  font-size: 0.72em;
+  line-height: 1.5;
+}
+
+.reveal .slides section.pf-messy .pf-row pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.reveal .slides section.pf-messy .code-copy-button {
+  display: none;
+}
+
+.reveal .slides section.pf-messy .pf-problems {
+  width: max-content;
+  max-width: 100%;
+  border-top: 1px solid #ddd8cf;
+  padding-top: 0.75em;
+}
+
+.reveal .slides section.pf-messy .pf-problems > p,
+.reveal .slides section.pf-messy .pf-problems > p strong {
+  font-size: 0.85em;
+  margin: 0 0 0.4em;
+}
+
+.reveal .slides section.pf-messy .pf-problems > ul {
+  font-size: 0.75em;
+  margin: 0;
+  padding-left: 1.05em;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.reveal .slides section.pf-messy .pf-problems > ul li {
+  margin: 0.4em 0;
+}
+.reveal .slides section.tf-examples > h2 {
+  margin-bottom: 0.35em;
+}
+
+.reveal .slides section.tf-examples > p {
+  font-size: 0.78em;
+  margin: 0.2em 0 0.35em;
+}
+
+.reveal .slides section.tf-examples .eq-brace-row {
+  margin: 0.35em 0 0.55em;
+  font-size: 0.92em;
+}
+
+.reveal .slides section.tf-examples .eq-compact {
+  font-size: 0.55em;
+  text-align: left;
+  margin-top: 0;
+}
+
+.reveal .slides section.tf-examples pre {
+  font-size: 0.42em;
+  margin: 0;
+}
+
+.reveal .slides section.tf-examples .muted {
+  margin-top: 0.45em;
+  font-size: 0.58em;
+}
+
+.reveal .slides section.frp-stack > h2 {
+  margin-bottom: 0.3em;
+}
+
+.reveal .slides section.frp-stack p,
+.reveal .slides section.frp-stack strong {
+  font-size: 0.72em;
+  margin: 0.25em 0 0.15em;
+}
+
+.reveal .slides section.frp-stack pre {
+  font-size: 0.42em;
+  margin: 0.15em 0 0.55em;
+}
+
+.reveal .slides section.frp-stack .frp-demo-slot {
+  max-width: 100%;
+  width: 100%;
+  margin-top: 0.4em;
+}
+
+.reveal .slides section.frp-stack .muted {
+  font-size: 0.58em;
+  margin-top: 0.4em;
+}
+
+.reveal .slides section.frp-stack > ul {
+  font-size: 0.62em;
+  margin: 0.25em 0 0;
+  padding-left: 1.1em;
+  list-style-position: outside;
+}
+
+.reveal .slides section.frp-stack > ul li {
+  margin: 0.12em 0;
+}
 @supports (aspect-ratio: 4 / 3) {
   .frp-demo-slot {
     height: auto;
@@ -535,21 +841,63 @@ html[data-edge="off"] .reveal .progress span {
   max-height: 480px;
 }
 
-.reveal .slides section.media-hero > h2 {
+.reveal .hmc-cross {
+  width: min(100%, 440px);
+  margin: 0.6em auto 0;
+}
+
+.reveal .hmc-cross svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.reveal .sf-lattice {
+  width: min(100%, 420px);
+  margin: 0.2em auto 0;
+}
+
+.reveal .sf-lattice svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.reveal .slides section.bsa-split > h2 {
   margin-bottom: 0.35em;
 }
 
-.reveal .slides section.media-hero img,
-.reveal .slides section.media-hero img[src$=".gif"] {
-  max-height: min(78vh, 760px);
+.reveal .slides section.bsa-split img,
+.reveal .slides section.bsa-split img[src$=".gif"] {
+  max-height: min(62vh, 560px);
   width: 100%;
   object-fit: contain;
 }
 
-.reveal .slides section.media-hero .muted {
-  margin-top: 0.35em;
+.reveal .slides section.bsa-split .eq-compact {
+  font-size: 1em;
+  text-align: left;
 }
 
+.reveal .slides section.bsa-split .eq-compact .MathJax,
+.reveal .slides section.bsa-split .eq-compact mjx-container {
+  font-size: 1.05em !important;
+}
+
+.reveal .slides section.bsa-split .design-legend-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45em;
+  justify-content: flex-start;
+  margin-top: 0.9em;
+  font-size: 0.7em;
+}
+
+.reveal .slides section.bsa-split .muted {
+  margin-top: 0.35em;
+  text-align: center;
+}
 .reveal .columns p {
   font-size: 0.78em;
   line-height: 1.35;
