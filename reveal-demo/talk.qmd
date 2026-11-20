@@ -302,9 +302,9 @@ From [*Cohn-Gordon, Pescia, Robnik, Hearth, Seljak, Lunts*, NeurIPS 2026](https:
 
 :::: {.columns}
 ::: {.column width="52%"}
-![](media/hmc/results/panel_longrun.png){.results-compact fig-alt="Fermion occupation, efficiency ratio, and bias diagnostics"}
+![](media/hmc/results/panel_longrun.png){.results-compact fig-alt="Fermion occupation and efficiency ratio uMCLMC over aHMC"}
 
-[$n(\mathbf{k})$; efficiency; bias $b_a$, $b_\epsilon$.]{.muted}
+[$n(\mathbf{k})$; efficiency ratio.]{.muted}
 :::
 ::: {.column width="48%"}
 ![](media/hmc/results/efficiency_plot.png){fig-alt="ESS per gradient vs lambda for uMCLMC, uLMC, aHMC"}
@@ -403,6 +403,8 @@ posterior y = do
 sampler :: Float -> Sampler Float
 sampler y = hmc (posterior y) 
 ```
+
+[Haskell]{.muted .code-lang}
 :::
 ::: {.column width="45%"}
 $$
@@ -536,8 +538,8 @@ inference = particleFilter posterior
 
 **Advantages of this approach:**
 
-- unifies and simplifies algorithms (what is a particle filter, filtering vs. smoothing)
-- scales to more complex models
+- simplifies and unifies algorithms (what is a particle filter, filtering vs. smoothing)
+- extensibility
 
 ## [Functional Programming]{.strand-f} + [Physics]{.strand-p} {data-edge="fp-physics"}
 
@@ -612,6 +614,8 @@ conjugateGradient
   :: forall (v :: Type) . ( VectorSpace v, InnerSpace v, Rational (Scalar v) )
   => Float -> (LinearMap v v) -> v -> v
 ```
+
+This code is extensible to new representations of vectors and maps.
 
 
 ## Linear algebra as code {.code-lg data-edge="fp-physics"}
@@ -724,8 +728,8 @@ $$
 2. **Reactive** probabilistic programming \
    [[S]{.strand-s}+[F]{.strand-f}]{.edge-pair} — decouple time, model, and inference (FRP)
 
-3. **Typed** formalization of physics \
-   [[F]{.strand-f}+[P]{.strand-p}]{.edge-pair} — representations & fusion in the type system
+3. **Typed** formal methods for physics \
+   [[F]{.strand-f}+[P]{.strand-p}]{.edge-pair} — math via types $\to$ extensible code
 :::
 ::::
 
